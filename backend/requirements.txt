@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+pydantic
+sqlalchemy[asyncio]
+alembic
+psycopg2-binary   # PostgreSQL
+milvus[client]
+redis
+openai
+sentence-transformers
+python-multipart
+python-jose[cryptography]   # JWT
+pytest
+httpx
