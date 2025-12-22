@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
-from pydantic import field_validator, model_validator, Field
+from pydantic import field_validator, model_validator, Field, RedisDsn
 from typing import Optional
+from pathlib import Path
 import secrets
 import logging
 
@@ -8,7 +9,23 @@ logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
-    # 数据库配置（必须配置）
+    """项目统一配置，所有环境变量均在此集中定义。
+
+    读取顺序（pydantic 默认）：
+    1. 显式传入的关键字参数
+    2. 环境变量（大写形式，如 `POSTGRES_DSN`）
+    3. `.env` 文件（位于项目根目录或 `BASE_DIR` 指定的位置）
+    4. 默认值
+    """
+    # 项目根目录
+    BASE_DIR: Path = Path(__file__).resolve().parents[1]
+
+    # FastAPI
+    APP_NAME: str = "PoemCloud"
+    DEBUG: bool = False
+    VERSION: str = "0.1.0"
+
+    # 数据库配置
     db_host: str
     db_port: int = 3306
     db_user: str
@@ -17,6 +34,12 @@ class Settings(BaseSettings):
 
     # 数据库连接URL（自动构建，无需手动配置）
     database_url: Optional[str] = None
+
+    # ---------- Milvus 向量数据库 ----------
+    MILVUS_HOST: str = Field("localhost", description="Milvus 服务主机")
+    MILVUS_PORT: int = Field(19530, description="Milvus 端口")
+    MILVUS_COLLECTION: str = Field("poem_vectors",
+                                   description="Milvus collection 名称")
 
     # Redis配置
     redis_url: str = "redis://localhost:6379"
@@ -53,6 +76,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        env_file_encoding = "utf-8"
         case_sensitive = False
         extra = "ignore"  # 忽略额外的环境变量，避免部署时出错
 
