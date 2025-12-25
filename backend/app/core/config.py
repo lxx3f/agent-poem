@@ -62,6 +62,9 @@ class Settings(BaseSettings):
     # 内部API密钥（用于内部服务调用，可选）
     internal_api_key: Optional[str] = None
 
+    # OPENAI_APIKEY
+    dashscope_api_key: Optional[str] = None
+
     # 交互日志配置
     log_batch_size: int = 1000  # 批量写入大小
     log_flush_interval: float = 5.0  # 刷新间隔（秒）

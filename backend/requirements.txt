@@ -7,8 +7,12 @@ psycopg2-binary   # PostgreSQL
 milvus[client]
 redis
 openai
-sentence-transformers
 python-multipart
 python-jose[cryptography]   # JWT
 pytest
 httpx
+cryptography
+pymysql 
+requests 
+tqdm 
+pymilvus
