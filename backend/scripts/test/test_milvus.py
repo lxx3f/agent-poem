@@ -1,3 +1,7 @@
+'''
+backend.scripts.test_milvus 的 Docstring
+测试Milvus连接
+'''
 from pymilvus import connections, utility
 
 # 连接Milvus
