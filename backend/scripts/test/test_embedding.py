@@ -29,7 +29,7 @@ def get_local_embedding(text: str,
 # 测试使用
 if __name__ == "__main__":
     # text = "Ollama可以部署本地embedding模型"
-    text = text_test_1[:800]
+    text = text_test_1[:1000]
     embedding = get_local_embedding(text)
     print(f"文本：{text}")
     print(len(text))

@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     db_user: str
     db_password: str
     db_name: str
+    db_charset: str = "utf8mb4"
 
     # 数据库连接URL（自动构建，无需手动配置）
     database_url: Optional[str] = None
@@ -40,6 +41,10 @@ class Settings(BaseSettings):
     MILVUS_PORT: int = Field(19530, description="Milvus 端口")
     MILVUS_COLLECTION: str = Field("poem_vectors",
                                    description="Milvus collection 名称")
+    MILVUS_VECTOR_FIELD: str = "embedding"
+    MILVUS_ID_FIELD: str = "poetry_id"
+    MILVUS_METRIC_TYPE: str = "IP"  # 或 L2
+    MILVUS_TOP_K: int = 5
 
     # Redis配置
     redis_url: str = "redis://localhost:6379"

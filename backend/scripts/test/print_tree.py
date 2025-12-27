@@ -14,6 +14,11 @@ IGNORE_DIRS: List[str] = [
     "dist",
     "build",
     "out",
+    "etcd_data",
+    "milvus_data",
+    "minio_data",
+    "mysql_data",
+    "redis_data",
 ]
 IGNORE_FILES: List[str] = [
     ".DS_Store",
