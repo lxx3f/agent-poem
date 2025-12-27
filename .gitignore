@@ -8,3 +8,5 @@ mysql_data
 redis_data
 
 *.logs
+
+__pycache__

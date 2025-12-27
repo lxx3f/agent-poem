@@ -25,8 +25,8 @@ from pymilvus import (
 MYSQL_CONFIG: Dict[str, str] = {
     "host": "localhost",
     "port": "3306",
-    "user": "poem",
-    "password": "poem123456",
+    "user": "root",
+    "password": "123456",
     "database": "shiyun_db",
     "charset": "utf8mb4",
 }
@@ -37,7 +37,7 @@ EMBEDDING_DIM: int = 768
 
 MILVUS_HOST: str = "localhost"
 MILVUS_PORT: int = 19530
-MILVUS_COLLECTION: str = "poetry_embedding"
+MILVUS_COLLECTION: str = "poem_vectors"
 
 DATA_ROOT: str = "../../database/chinese-gushiwen"
 
@@ -392,12 +392,12 @@ def main() -> None:
     collection = init_milvus()
 
     # 已完成
-    # print("▶ 导入作者")
-    # import_writers(conn)
+    print("▶ 导入作者")
+    import_writers(conn)
 
     # 已完成
-    # print("▶ 导入诗词并生成向量")
-    # import_poetry(conn, collection)
+    print("▶ 导入诗词并生成向量")
+    import_poetry(conn, collection)
 
     # 已完成
     print("▶ 导入名句")
