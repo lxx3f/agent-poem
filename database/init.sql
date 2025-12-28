@@ -90,3 +90,55 @@ CREATE TABLE sentence (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='诗句表';
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+
+-- ===============================
+-- 用户表
+-- ===============================
+DROP TABLE IF EXISTS users;
+CREATE TABLE users (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户ID',
+  email VARCHAR(128) NOT NULL UNIQUE COMMENT '登录邮箱',
+  password_hash VARCHAR(255) NOT NULL COMMENT '密码哈希',
+  username VARCHAR(64) COMMENT '用户名/昵称',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
+
+-- ===============================
+-- 会话表
+-- ===============================
+DROP TABLE IF EXISTS conversations;
+CREATE TABLE conversations (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '会话ID',
+  user_id BIGINT NOT NULL COMMENT '所属用户ID',
+  title VARCHAR(128) COMMENT '会话标题',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_conversations_users
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会话表';
+
+
+-- ===============================
+-- 消息表
+-- ===============================
+DROP TABLE IF EXISTS messages;
+CREATE TABLE messages (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '消息ID',
+  conversation_id BIGINT NOT NULL COMMENT '所属会话ID',
+  role ENUM('user', 'assistant', 'system') NOT NULL COMMENT '消息角色',
+  content TEXT NOT NULL COMMENT '消息内容',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_messages_conversations
+    FOREIGN KEY (conversation_id)
+    REFERENCES conversations(id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会话消息表';
+
+

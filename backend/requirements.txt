@@ -1,15 +1,11 @@
 fastapi
 uvicorn[standard]
 pydantic
-sqlalchemy[asyncio]
-alembic
 psycopg2-binary   # PostgreSQL
 milvus[client]
 redis
 openai
-python-multipart
 python-jose[cryptography]   # JWT
-pytest
 httpx
 cryptography
 pymysql 

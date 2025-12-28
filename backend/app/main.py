@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from backend.app.api.poetry import router as poetry_router
+from backend.app.api.conversation import router as conversation_router
 from fastapi.exceptions import RequestValidationError
 
 from backend.app.core.exceptions import (
@@ -8,8 +9,9 @@ from backend.app.core.exceptions import (
     validation_exception_handler,
 )
 
-app = FastAPI()
+app = FastAPI(title="PoemCloud API")
 app.include_router(poetry_router)
+app.include_router(conversation_router)
 
 app.add_exception_handler(BusinessException, business_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)

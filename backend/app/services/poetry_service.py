@@ -4,6 +4,7 @@ from backend.app.services.embedding_service import Embedding_service
 from backend.app.services.milvus_service import MilvusService
 from backend.app.services.mysql_service import MySQLService
 from backend.app.schemas.poetry import PoetrySearchItem
+from backend.app.core.exceptions import BusinessException
 
 SearchType = Literal["keyword", "vector", "hybrid"]
 
