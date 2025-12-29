@@ -27,6 +27,18 @@ class OpenAILLMService(LLMService):
         return response.choices[0].message.content if response.choices[
             0].message.content else ""
 
+    def process_message(
+        self,
+        message_id: int,
+        conversation_id: int,
+        user_id: int,
+    ) -> None:
+        """
+        处理消息的示例方法
+        """
+        # 这里可以添加调用 chat 方法并处理结果的逻辑
+        pass
+
 
 class QwenLLMService(LLMService):
 
@@ -46,6 +58,18 @@ class QwenLLMService(LLMService):
         return response.choices[0].message.content if response.choices[
             0].message.content else ""
 
+    def process_message(
+        self,
+        message_id: int,
+        conversation_id: int,
+        user_id: int,
+    ) -> None:
+        """
+        处理消息的示例方法
+        """
+        # 这里可以添加调用 chat 方法并处理结果的逻辑
+        pass
+
 
 class DeepSeekLLMService(LLMService):
 
@@ -64,6 +88,18 @@ class DeepSeekLLMService(LLMService):
         )
         return response.choices[0].message.content if response.choices[
             0].message.content else ""
+
+    def process_message(
+        self,
+        message_id: int,
+        conversation_id: int,
+        user_id: int,
+    ) -> None:
+        """
+        处理消息的示例方法
+        """
+        # 这里可以添加调用 chat 方法并处理结果的逻辑
+        pass
 
 
 def get_llm_service() -> LLMService:

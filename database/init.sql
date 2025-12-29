@@ -133,6 +133,7 @@ CREATE TABLE messages (
   conversation_id BIGINT NOT NULL COMMENT '所属会话ID',
   role ENUM('user', 'assistant', 'system') NOT NULL COMMENT '消息角色',
   content TEXT NOT NULL COMMENT '消息内容',
+  status ENUM('pending', 'done', 'failed') NOT NULL COMMENT '消息状态',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   CONSTRAINT fk_messages_conversations

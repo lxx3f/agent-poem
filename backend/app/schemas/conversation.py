@@ -25,19 +25,25 @@ class ConversationItem(BaseModel):
     updated_at: datetime
 
 
+class MessageItem(BaseModel):
+    id: int
+    role: RoleType
+    content: str
+    created_at: datetime
+
+
 class MessageListRequest(BaseUserRequest):
     conversation_id: int
     limit: int = 50
+
+
+class MessageListResponse(BaseUserRequest):
+    conversation_id: int
+    total: int = 50
+    messages: List[MessageItem]
 
 
 class MessageCreateRequest(BaseUserRequest):
     conversation_id: int
     role: RoleType
     content: str
-
-
-class MessageItem(BaseModel):
-    id: int
-    role: RoleType
-    content: str
-    created_at: datetime

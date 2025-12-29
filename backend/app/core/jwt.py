@@ -69,7 +69,6 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(
             raise BusinessException(code=401, message="Token 中缺少 user_id")
         user_service = UserService()
         user = user_service.get_user_by_id(user_id)
-        user["nickname"] = user["username"]
         return user
 
     except JWTError:
