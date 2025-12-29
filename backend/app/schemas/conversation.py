@@ -6,7 +6,7 @@ RoleType = Literal["user", "assistant", "system"]
 
 
 class BaseUserRequest(BaseModel):
-    user_id: int = Field(..., description="用户ID")
+    pass
 
 
 class ConversationCreateRequest(BaseUserRequest):

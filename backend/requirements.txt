@@ -12,3 +12,6 @@ pymysql
 requests 
 tqdm 
 pymilvus
+passlib
+bcrypt==3.2.2
+pydantic[email]

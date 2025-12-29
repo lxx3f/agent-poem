@@ -1,0 +1,76 @@
+from datetime import datetime, timedelta
+from typing import Optional, Dict, Any
+
+from jose import jwt, JWTError
+
+from backend.app.core.config import settings
+from backend.app.core.exceptions import BusinessException
+from fastapi import Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from backend.app.services.user_service import UserService
+from backend.app.schemas.user import UserItem
+
+security = HTTPBearer(auto_error=False)
+
+
+def create_access_token(
+    user_id: int,
+    expires_delta: Optional[timedelta] = None,
+) -> str:
+    expire = datetime.now() + (expires_delta or timedelta(
+        minutes=settings.jwt_access_token_expire_minutes))
+
+    payload = {
+        "user_id": str(user_id),
+        "exp": expire,
+    }
+
+    return jwt.encode(
+        payload,
+        settings.jwt_secret_key,
+        algorithm=settings.jwt_algorithm,
+    )
+
+
+def parse_access_token(token: str) -> int:
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret_key,
+            algorithms=[settings.jwt_algorithm],
+        )
+        sub = payload.get("user_id")
+        if sub is None:
+            raise BusinessException(
+                code=401,
+                message="Invalid or expired token",
+            )
+        user_id = int(sub)
+        return user_id
+    except (JWTError, ValueError):
+        raise BusinessException(
+            code=401,
+            message="Invalid or expired token",
+        )
+
+
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(
+    security)) -> Dict[str, Any]:
+    if credentials is None:
+        raise BusinessException(code=401, message="未登录")
+
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token,
+                             settings.jwt_secret_key,
+                             algorithms=[settings.jwt_algorithm])
+        user_id: int | None = payload.get("user_id")
+        if user_id is None:
+            raise BusinessException(code=401, message="Token 中缺少 user_id")
+        user_service = UserService()
+        user = user_service.get_user_by_id(user_id)
+        user["nickname"] = user["username"]
+        return user
+
+    except JWTError:
+        raise BusinessException(code=401, message="Token 无效或已过期")

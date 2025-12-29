@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings
 from pydantic import field_validator, model_validator, Field, RedisDsn
-from typing import Optional
+from typing import Optional, Literal
 from pathlib import Path
 import secrets
 import logging
@@ -53,13 +53,13 @@ class Settings(BaseSettings):
     server_base_url: str = "http://localhost:8000"  # 服务器基础URL
 
     # JWT配置（必须从环境变量读取）
-    secret_key: str
-    algorithm: str = "HS256"
-    access_token_expire_minutes: int = Field(
+    jwt_secret_key: str
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = Field(
         default=15,
         validation_alias="ACCESS_TOKEN_EXPIRE_MINUTES",
         description="access token有效期（分钟）")
-    refresh_token_expire_minutes: int = Field(
+    jwt_refresh_token_expire_minutes: int = Field(
         default=45,
         validation_alias="REFRESH_TOKEN_EXPIRE_MINUTES",
         description="refresh token有效期（分钟）")
@@ -67,8 +67,22 @@ class Settings(BaseSettings):
     # 内部API密钥（用于内部服务调用，可选）
     internal_api_key: Optional[str] = None
 
-    # OPENAI_APIKEY
-    dashscope_api_key: Optional[str] = None
+    # LLM_provider
+    llm_provider: Literal["openai", "qwen", "deepseek"] = "qwen"
+
+    # OpenAI
+    openai_api_key: Optional[str] = None
+    openai_model: str = "gpt-4o-mini"
+
+    # Qwen
+    qwen_api_key: str | None = None
+    qwen_model: str = "qwen-turbo"
+    qwen_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+
+    # DeepSeek
+    deepseek_api_key: str | None = None
+    deepseek_model: str = "deepseek-chat"
+    deepseek_base_url: str = "https://api.deepseek.com/v1"
 
     # 交互日志配置
     log_batch_size: int = 1000  # 批量写入大小
@@ -101,13 +115,13 @@ class Settings(BaseSettings):
     def _validate_security_settings(self):
         """验证安全配置"""
         # 验证JWT密钥强度
-        if len(self.secret_key) < 32:
+        if len(self.jwt_secret_key) < 32:
             logger.error("SECRET_KEY必须至少32个字符！")
             raise ValueError("SECRET_KEY必须至少32个字符以确保安全性")
 
         # 输出Token配置信息（用于调试）
         logger.info(
-            f"🔑 Token有效期 - Access: {self.access_token_expire_minutes}分钟, Refresh: {self.refresh_token_expire_minutes}分钟"
+            f"🔑 Token有效期 - Access: {self.jwt_access_token_expire_minutes}分钟, Refresh: {self.jwt_refresh_token_expire_minutes}分钟"
         )
 
         logger.info("✅ 安全配置验证通过")

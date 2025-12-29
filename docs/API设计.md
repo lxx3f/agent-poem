@@ -30,6 +30,9 @@
 |data |	json |	业务数据 |
 
 ---
+设计原则：
+service层写处理逻辑，返回dict，api层封装
+---
 
 # 二、Poetry API（基础能力层）
 
