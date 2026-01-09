@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
-from backend.app.schemas.user import (
+from app.schemas.user import (
     UserRegisterRequest,
     UserRegisterResponse,
     UserUpdateRequest,
     UserLoginRequest,
 )
-from backend.app.core.jwt import create_access_token, get_current_user
-from backend.app.core.response import success_response
-from backend.app.services.user_service import UserService
+from app.core.jwt import create_access_token, get_current_user
+from app.core.response import success_response
+from app.services.user_service import UserService
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 

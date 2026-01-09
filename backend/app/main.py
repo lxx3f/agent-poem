@@ -1,18 +1,18 @@
 from fastapi import FastAPI
-from backend.app.api.poetry import router as poetry_router
-from backend.app.api.conversation import router as conversation_router
-from backend.app.api.auth import router as auth_router
-from backend.app.api.message import router as message_router
-from backend.app.api.agent import router as agent_router
+from app.api.poetry import router as poetry_router
+from app.api.conversation import router as conversation_router
+from app.api.auth import router as auth_router
+from app.api.message import router as message_router
+from app.api.agent import router as agent_router
 from fastapi.exceptions import RequestValidationError
 
-from backend.app.core.exceptions import (
+from app.core.exceptions import (
     BusinessException,
     business_exception_handler,
     validation_exception_handler,
 )
-from backend.app.core.logger import setup_logger
-from backend.app.core.middleware import request_id_middleware
+from app.core.logger import setup_logger
+from app.core.middleware import request_id_middleware
 
 setup_logger()
 

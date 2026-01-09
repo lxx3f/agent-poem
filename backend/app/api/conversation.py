@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
 from typing import List, cast
 
-from backend.app.core.jwt import get_current_user
-from backend.app.core.response import StandardResponse, success_response, error_response
-from backend.app.services.conversation_service import ConversationService
-from backend.app.services.message_service import MessageService
-from backend.app.schemas.conversation import (
+from app.core.jwt import get_current_user
+from app.core.response import StandardResponse, success_response, error_response
+from app.services.conversation_service import ConversationService
+from app.services.message_service import MessageService
+from app.schemas.conversation import (
     ConversationCreateRequest,
     ConversationListRequest,
     ConversationItem,

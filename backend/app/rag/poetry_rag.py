@@ -1,8 +1,8 @@
 from typing import List
 
-from backend.app.rag.base import RAGContext
-from backend.app.services.embedding_service import Embedding_service
-from backend.app.services.milvus_service import MilvusService
+from app.rag.base import RAGContext
+from app.services.embedding_service import Embedding_service
+from app.services.milvus_service import MilvusService
 
 
 class PoetryRAG(RAGContext):

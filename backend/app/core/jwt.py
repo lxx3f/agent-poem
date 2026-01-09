@@ -3,12 +3,12 @@ from typing import Optional, Dict, Any
 
 from jose import jwt, JWTError
 
-from backend.app.core.config import settings
-from backend.app.core.exceptions import BusinessException
+from app.core.config import settings
+from app.core.exceptions import BusinessException
 from fastapi import Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from backend.app.services.user_service import UserService
-from backend.app.schemas.user import UserItem
+from app.services.user_service import UserService
+from app.schemas.user import UserItem
 
 security = HTTPBearer(auto_error=False)
 

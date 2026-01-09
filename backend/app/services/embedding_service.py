@@ -1,7 +1,9 @@
 import requests
-from backend.app.core.exceptions import BusinessException
+from app.core.exceptions import BusinessException
+from app.core.config import settings
 
-OLLAMA_EMBED_URL = "http://localhost:11434/api/embeddings"
+OLLAMA_EMBED_URL = f"{settings.OLLAMA_BASE_URL}/api/embeddings"
+
 MODEL_NAME = "nomic-embed-text"
 MAX_LEN = 1000
 DIMENTION_LEN = 768

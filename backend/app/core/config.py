@@ -47,7 +47,10 @@ class Settings(BaseSettings):
     MILVUS_TOP_K: int = 5
 
     # Redis配置
-    redis_url: str = "redis://localhost:6379"
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_url: str = f"redis://{redis_host}:{redis_port}"
+    redis_password: str = ""
 
     # 服务器配置
     server_base_url: str = "http://localhost:8000"  # 服务器基础URL
@@ -83,6 +86,9 @@ class Settings(BaseSettings):
     deepseek_api_key: str | None = None
     deepseek_model: str = "deepseek-chat"
     deepseek_base_url: str = "https://api.deepseek.com/v1"
+
+    # Ollama(Embedding)
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
 
     # 交互日志配置
     log_batch_size: int = 1000  # 批量写入大小

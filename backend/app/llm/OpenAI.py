@@ -2,9 +2,9 @@ from typing import List, cast
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam
 
-from backend.app.core.config import settings
-from backend.app.llm.base import LLMServiceBase
-from backend.app.llm.types import LLMMessage
+from app.core.config import settings
+from app.llm.base import LLMServiceBase
+from app.llm.types import LLMMessage
 
 
 class OpenAILLMService(LLMServiceBase):

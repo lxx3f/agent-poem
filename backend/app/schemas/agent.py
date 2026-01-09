@@ -8,11 +8,13 @@ class AgentItem(BaseModel):
     name: str
     code: str
     description: str
-    workflow: str
+    workflow_key: str
     system_prompt: str
     parameters: Optional[str]
     llm_config: Optional[str]
     is_active: bool
+    created_at: datetime
+    updated_at: datetime
 
 
 class AgentListRequest(BaseModel):

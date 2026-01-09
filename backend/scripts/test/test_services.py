@@ -3,10 +3,10 @@
 """
 
 from pymilvus import Collection, connections
-from backend.app.services.milvus_service import MilvusService
+from app.services.milvus_service import MilvusService
 
 # 假设有一个 embedding_service.py，提供 get_embedding(text: str) -> list[float]
-from backend.app.services.embedding_service import Embedding_service
+from app.services.embedding_service import Embedding_service
 
 
 def main():

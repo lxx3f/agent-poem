@@ -1,9 +1,9 @@
 from typing import List, Dict, Any, Optional, Literal
 
-from backend.app.core.exceptions import BusinessException
-from backend.app.services.mysql_service import MySQLService
-from backend.app.workflows.poetry_game import PoetryGameWorkflow
-from backend.app.workflows.rag_chat import RagChatWorkflow
+from app.core.exceptions import BusinessException
+from app.services.mysql_service import MySQLService
+from app.workflows.poetry_game import PoetryGameWorkflow
+from app.workflows.rag_chat import RagChatWorkflow
 
 
 class AgentService:

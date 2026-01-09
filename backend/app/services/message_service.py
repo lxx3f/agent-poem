@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Optional, Literal
 
-from backend.app.core.exceptions import BusinessException
-from backend.app.services.mysql_service import MySQLService
+from app.core.exceptions import BusinessException
+from app.services.mysql_service import MySQLService
 
 RoleType = Literal["user", "assistant", "system"]
 StatusType = Literal["pending", "done", "failed"]
