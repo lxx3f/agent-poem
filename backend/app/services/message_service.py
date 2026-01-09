@@ -101,14 +101,13 @@ class MessageService:
         '''
         获取会话消息列表
         
-        :param self: 说明
-        :param conversation_id: 说明
+        :param conversation_id: 会话ID
         :type conversation_id: int
-        :param user_id: 说明
+        :param user_id: 用户ID
         :type user_id: int
-        :param limit: 说明
+        :param limit: 限制数量
         :type limit: int
-        :return: 说明
+        :return: 消息列表
         :rtype: List[Dict[str, Any]]
         '''
         # 1. 校验

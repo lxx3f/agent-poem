@@ -94,3 +94,18 @@ class UserService:
         :rtype: Dict[str, Any]
         '''
         return self.mysql_service.get_user_by_id(user_id=user_id)
+
+    def update_user(self, user_id: int, nickname: str) -> None:
+        '''
+        更新用户信息
+
+        :param self: 说明
+        :param user_id: 说明
+        :type user_id: int
+        :param nickname: 说明
+        :type nickname: str
+        :return: 说明
+        :rtype: Dict[str, Any]
+        '''
+        return self.mysql_service.update_user(user_id=user_id,
+                                              nickname=nickname)

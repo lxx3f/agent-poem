@@ -26,6 +26,20 @@ class PoetryService:
         search_type: SearchType = "hybrid",
         top_k: int = 5,
     ) -> List[Dict[str, Any]]:
+        '''
+        搜索古诗词
+        
+        :param query: 搜索关键词
+        :type query: str
+        :param search_type: 搜索类型："keyword", "vector", "hybrid"
+        :type search_type: SearchType
+        :param top_k: 返回结果数量
+        :type top_k: int
+        :return: 搜索结果列表
+        :rtype: List[Dict[str, Any]]
+        '''
+        if search_type not in ("keyword", "vector", "hybrid"):
+            raise BusinessException("Invalid search type")
 
         poetry_ids: List[int] = []
 

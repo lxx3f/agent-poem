@@ -280,6 +280,50 @@ class MySQLService:
             }
 
     # =====================
+    # Agent
+    # =====================
+    def get_agents(self, limit: int) -> List[Dict[str, Any]]:
+        '''
+        获取 agent 列表, 最多返回 limit 条
+        
+        :param self: 说明
+        :param limit: 说明
+        :type limit: int
+        :return: 说明
+        :rtype: List[Dict[str, Any]]
+        '''
+        sql = """
+                SELECT id, name, code, description, workflow_key, system_prompt, parameters, llm_config, is_active, created_at, updated_at
+                FROM agents
+                LIMIT %s
+                """
+        with self.conn.cursor(pymysql.cursors.DictCursor) as cursor:
+            cursor.execute(sql, (limit, ))
+            return list(cursor.fetchall())
+
+    def get_agent_by_id(self, agent_id: int) -> Dict[str, Any]:
+        '''
+        根据 ID 获取 Agent 详情, 要求 agent_id 存在
+        
+        :param self: 说明
+        :param agent_id: 说明
+        :type agent_id: int
+        :return: 说明
+        :rtype: Dict[str, Any]
+        '''
+        sql = """
+                SELECT id, name, code, description, workflow_key, system_prompt, parameters, llm_config, is_active, created_at, updated_at
+                FROM agents
+                WHERE id = %s
+                """
+        with self.conn.cursor(pymysql.cursors.DictCursor) as cursor:
+            cursor.execute(sql, (agent_id, ))
+            row = cursor.fetchone()
+            if row is None:
+                raise BusinessException(404, "mysql error: agent not found")
+            return row
+
+    # =====================
     # Conversation
     # =====================
     def check_conversation_exists(
@@ -303,18 +347,19 @@ class MySQLService:
     def create_conversation(
         self,
         user_id: int,
+        agent_id: int,
         title: str,
     ) -> int:
         '''
         创建新会话，返回 conversation_id
         '''
         sql = """
-        INSERT INTO conversations (user_id, title, created_at, updated_at)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO conversations (user_id, title, agent_id, created_at, updated_at)
+        VALUES (%s, %s, %s, %s, %s)
         """
         cursor = self.conn.cursor(pymysql.cursors.DictCursor)
         now = datetime.now(timezone.utc)
-        cursor.execute(sql, (user_id, title, now, now))
+        cursor.execute(sql, (user_id, title, agent_id, now, now))
         return cursor.lastrowid
 
     def delete_conversation(
@@ -334,34 +379,37 @@ class MySQLService:
         cursor = self.conn.cursor(pymysql.cursors.DictCursor)
         cursor.execute(sql, (conversation_id, ))
 
-    def get_conversations_by_user(
+    def get_conversations_by_user_agent(
         self,
         user_id: int,
+        agent_id: int,
         limit: int = 20,
         offset: int = 0,
     ) -> List[Dict[str, Any]]:
         '''
-        获取用户的会话列表, 顺序按 updated_at 降序排列, 要求user_id存在
+        获取用户对应agent的会话列表, 顺序按 updated_at 降序排列, 要求user_id存在
         
-        :param self: 说明
-        :param user_id: 说明
+        :param self: 
+        :param user_id: 
         :type user_id: int
-        :param limit: 说明
+        :param agent_id: 
+        :type agent_id: int
+        :param limit: 
         :type limit: int
-        :param offset: 说明
+        :param offset: 
         :type offset: int
-        :return: 说明
+        :return: 
         :rtype: List[Dict[str, Any]]
         '''
         sql = """
-        SELECT id, title, created_at, updated_at
+        SELECT id, title, agent_id, created_at, updated_at
         FROM conversations
-        WHERE user_id = %s
+        WHERE user_id = %s AND agent_id = %s
         ORDER BY updated_at DESC
         LIMIT %s OFFSET %s
         """
         cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute(sql, (user_id, limit, offset))
+        cursor.execute(sql, (user_id, agent_id, limit, offset))
         rows = cursor.fetchall()
         return list(rows)
 
@@ -390,6 +438,31 @@ class MySQLService:
         cursor = self.conn.cursor()
         cursor.execute(sql, (conversation_id, user_id))
         return cursor.fetchone() is not None
+
+    def get_conversation_by_id(
+        self,
+        conversation_id: int,
+    ) -> Dict[str, Any]:
+        '''
+        根据 conversation_id 获取会话详情，要求 conversation_id 存在
+        
+        :param self: 说明
+        :param conversation_id: 说明
+        :type conversation_id: int
+        :return: 说明
+        :rtype: Dict[str, Any]
+        '''
+        sql = """
+        SELECT id, user_id, title, agent_id, created_at, updated_at
+        FROM conversations
+        WHERE id = %s
+        """
+        cursor = self.conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute(sql, (conversation_id, ))
+        row = cursor.fetchone()
+        if row is None:
+            raise BusinessException(404, "mysql error: conversation not found")
+        return row
 
     # =====================
     # Message

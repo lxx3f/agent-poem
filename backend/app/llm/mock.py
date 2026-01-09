@@ -1,11 +1,11 @@
 from typing import List
 
-from backend.app.llm.base import LLMService
+from backend.app.llm.base import LLMServiceBase
 from backend.app.llm.types import LLMMessage
 from backend.app.services.message_service import MessageService
 
 
-class MockLLMService(LLMService):
+class MockLLMService(LLMServiceBase):
 
     def chat(self, messages: List[LLMMessage]) -> str:
         last_user_message = next(
@@ -24,7 +24,6 @@ class MockLLMService(LLMService):
         """
         处理消息的示例方法
         """
-        # 这里可以添加调用 chat 方法并处理结果的逻辑
         service = MessageService()
         content = f"[mock reply] 这是对消息 ID {message_id} 的回复。"
         service.update_message_content(

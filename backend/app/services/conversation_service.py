@@ -58,6 +58,7 @@ class ConversationService:
     def create_conversation(
         self,
         user_id: int,
+        agent_id: int,
         title: str,
     ) -> int:
         """
@@ -67,6 +68,7 @@ class ConversationService:
         self._check_user_exists(user_id)
         return self.mysql_service.create_conversation(
             user_id=user_id,
+            agent_id=agent_id,
             title=title,
         )
 
@@ -84,6 +86,7 @@ class ConversationService:
     def list_conversations(
         self,
         user_id: int,
+        agent_id: int,
         limit: int = 20,
         offset: int = 0,
     ) -> List[Dict[str, Any]]:
@@ -93,8 +96,18 @@ class ConversationService:
 
         self._check_user_exists(user_id)
 
-        return self.mysql_service.get_conversations_by_user(
+        return self.mysql_service.get_conversations_by_user_agent(
             user_id=user_id,
+            agent_id=agent_id,
             limit=limit,
             offset=offset,
         )
+
+    def get_conversation(self, user_id: int,
+                         conversation_id: int) -> Dict[str, Any]:
+        '''
+        获取会话详情
+        '''
+        self._check_user_exists(user_id)
+        self._check_conversation_owner(conversation_id, user_id)
+        return self.mysql_service.get_conversation_by_id(conversation_id)

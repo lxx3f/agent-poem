@@ -10,6 +10,12 @@ router = APIRouter(prefix="/api/poetry", tags=["Poetry"])
 
 @router.post("/search", response_model=StandardResponse[PoetrySearchResponse])
 def search_poetry(req: PoetrySearchRequest):
+    '''
+    搜索诗词
+    
+    :param req: 请求体
+    :type req: PoetrySearchRequest
+    '''
     service = PoetryService()
     results = service.search(
         query=req.query,

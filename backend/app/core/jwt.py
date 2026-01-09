@@ -17,6 +17,16 @@ def create_access_token(
     user_id: int,
     expires_delta: Optional[timedelta] = None,
 ) -> str:
+    '''
+    创建访问令牌
+    
+    :param user_id: 用户 ID
+    :type user_id: int
+    :param expires_delta: 过期时间
+    :type expires_delta: Optional[timedelta]
+    :return: 访问令牌
+    :rtype: str
+    '''
     expire = datetime.now() + (expires_delta or timedelta(
         minutes=settings.jwt_access_token_expire_minutes))
 
@@ -33,6 +43,14 @@ def create_access_token(
 
 
 def parse_access_token(token: str) -> int:
+    '''
+    解析访问令牌
+    
+    :param token: 访问令牌
+    :type token: str
+    :return: 用户 ID
+    :rtype: int
+    '''
     try:
         payload = jwt.decode(
             token,
@@ -56,6 +74,14 @@ def parse_access_token(token: str) -> int:
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(
     security)) -> Dict[str, Any]:
+    '''
+    获取当前用户
+    
+    :param credentials: 认证信息
+    :type credentials: HTTPAuthorizationCredentials
+    :return: 用户信息
+    :rtype: Dict[str, Any]
+    '''
     if credentials is None:
         raise BusinessException(code=401, message="未登录")
 

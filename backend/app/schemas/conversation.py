@@ -11,15 +11,18 @@ class BaseUserRequest(BaseModel):
 
 class ConversationCreateRequest(BaseUserRequest):
     title: str = Field("新对话", description="会话标题")
+    agent_id: int
 
 
 class ConversationListRequest(BaseUserRequest):
+    agent_id: int
     limit: int = 20
     offset: int = 0
 
 
 class ConversationItem(BaseModel):
     id: int
+    agent_id: int
     title: Optional[str]
     created_at: datetime
     updated_at: datetime
