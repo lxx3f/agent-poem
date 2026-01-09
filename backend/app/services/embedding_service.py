@@ -1,4 +1,5 @@
 import requests
+from backend.app.core.exceptions import BusinessException
 
 OLLAMA_EMBED_URL = "http://localhost:11434/api/embeddings"
 MODEL_NAME = "nomic-embed-text"
@@ -24,7 +25,8 @@ class Embedding_service:
                              timeout=30)
 
         if resp.status_code != 200:
-            raise ValueError(
+            raise BusinessException(
+                500,
                 f"embedding error: embedding service not work, status_code : {resp.status_code}"
             )
 

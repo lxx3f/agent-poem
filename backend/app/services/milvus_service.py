@@ -1,6 +1,7 @@
 from pymilvus import Collection, connections
 from typing import List, Any, cast
 from backend.app.core.config import settings
+from backend.app.core.exceptions import BusinessException
 
 
 class MilvusService:

@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Literal
 from backend.app.services.embedding_service import Embedding_service
 from backend.app.services.milvus_service import MilvusService
 from backend.app.services.mysql_service import MySQLService
-from backend.app.schemas.poetry import PoetrySearchItem
+from backend.app.core.exceptions import BusinessException
 
 SearchType = Literal["keyword", "vector", "hybrid"]
 
@@ -25,7 +25,21 @@ class PoetryService:
         query: str,
         search_type: SearchType = "hybrid",
         top_k: int = 5,
-    ) -> List[PoetrySearchItem]:
+    ) -> List[Dict[str, Any]]:
+        '''
+        搜索古诗词
+        
+        :param query: 搜索关键词
+        :type query: str
+        :param search_type: 搜索类型："keyword", "vector", "hybrid"
+        :type search_type: SearchType
+        :param top_k: 返回结果数量
+        :type top_k: int
+        :return: 搜索结果列表
+        :rtype: List[Dict[str, Any]]
+        '''
+        if search_type not in ("keyword", "vector", "hybrid"):
+            raise BusinessException("Invalid search type")
 
         poetry_ids: List[int] = []
 
@@ -60,17 +74,16 @@ class PoetryService:
         #     print(row.keys())
 
         # 5. 组装
-        result: List[PoetrySearchItem] = []
+        result: List[Dict[str, Any]] = []
 
         for row in rows:
             pid = row["id"]
-            result.append(
-                PoetrySearchItem(
-                    id=pid,
-                    title=row["title"],
-                    dynasty=row["dynasty"],
-                    writer=row["name"],
-                    content=row["content"],
-                ))
+            result.append({
+                'id': row["id"],
+                "title": row["title"],
+                "dynasty": row["dynasty"],
+                "writer": row["name"],
+                "content": row["content"],
+            })
 
         return result
