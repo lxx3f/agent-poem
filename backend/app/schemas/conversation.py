@@ -5,16 +5,16 @@ from pydantic import BaseModel, Field
 RoleType = Literal["user", "assistant", "system"]
 
 
-class BaseUserRequest(BaseModel):
-    pass
-
-
-class ConversationCreateRequest(BaseUserRequest):
+class ConversationCreateRequest(BaseModel):
     title: str = Field("新对话", description="会话标题")
     agent_id: int
 
 
-class ConversationListRequest(BaseUserRequest):
+class ConversationCreateResponse(BaseModel):
+    conversation_id: int
+
+
+class ConversationListRequest(BaseModel):
     agent_id: int
     limit: int = 20
     offset: int = 0
@@ -28,6 +28,11 @@ class ConversationItem(BaseModel):
     updated_at: datetime
 
 
+class ConversationListResponse(BaseModel):
+    conversations: List[ConversationItem]
+    total: int
+
+
 class MessageItem(BaseModel):
     id: int
     role: RoleType
@@ -35,18 +40,12 @@ class MessageItem(BaseModel):
     created_at: datetime
 
 
-class MessageListRequest(BaseUserRequest):
+class MessageListRequest(BaseModel):
     conversation_id: int
     limit: int = 50
 
 
-class MessageListResponse(BaseUserRequest):
+class MessageListResponse(BaseModel):
     conversation_id: int
     total: int = 50
     messages: List[MessageItem]
-
-
-class MessageCreateRequest(BaseUserRequest):
-    conversation_id: int
-    role: RoleType
-    content: str

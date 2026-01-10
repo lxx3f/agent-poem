@@ -16,8 +16,8 @@ def search_poetry(req: PoetrySearchRequest):
     :param req: 请求体
     :type req: PoetrySearchRequest
     '''
-    service = PoetryService()
-    results = service.search(
+    poetry_service = PoetryService()
+    results = poetry_service.search(
         query=req.query,
         search_type=req.search_type,
         top_k=req.top_k,
@@ -33,6 +33,5 @@ def search_poetry(req: PoetrySearchRequest):
                 content=item["content"],
                 score=item.get("score", None),
             ))
-
-    return success_response(PoetrySearchResponse(total=len(items),
-                                                 items=items))
+    response = PoetrySearchResponse(total=len(items), items=items)
+    return success_response(data=response)

@@ -9,7 +9,7 @@ RoleType = Literal["user", "assistant", "system"]
 class ConversationService:
 
     def __init__(self, mysql_service: MySQLService = MySQLService()):
-        self.mysql_service = mysql_service
+        pass
 
     # =====================
     # 校验相关
@@ -22,7 +22,8 @@ class ConversationService:
         :param user_id: 说明
         :type user_id: int
         '''
-        if not self.mysql_service.user_exists(user_id):
+        mysql_service = MySQLService()
+        if not mysql_service.user_exists(user_id):
             raise BusinessException(
                 code=404,
                 message="User does not exist",
@@ -42,7 +43,8 @@ class ConversationService:
         :param user_id: 说明
         :type user_id: int
         '''
-        if not self.mysql_service.conversation_belongs_to_user(
+        mysql_service = MySQLService()
+        if not mysql_service.conversation_belongs_to_user(
                 conversation_id,
                 user_id,
         ):
@@ -64,9 +66,9 @@ class ConversationService:
         """
         创建新会话，返回 conversation_id
         """
-
+        mysql_service = MySQLService()
         self._check_user_exists(user_id)
-        return self.mysql_service.create_conversation(
+        return mysql_service.create_conversation(
             user_id=user_id,
             agent_id=agent_id,
             title=title,
@@ -80,8 +82,9 @@ class ConversationService:
         """
         删除会话
         """
+        mysql_service = MySQLService()
         self._check_conversation_owner(conversation_id, user_id)
-        self.mysql_service.delete_conversation(conversation_id)
+        mysql_service.delete_conversation(conversation_id)
 
     def list_conversations(
         self,
@@ -93,10 +96,9 @@ class ConversationService:
         """
         列出用户的会话列表
         """
-
+        mysql_service = MySQLService()
         self._check_user_exists(user_id)
-
-        return self.mysql_service.get_conversations_by_user_agent(
+        return mysql_service.get_conversations_by_user_agent(
             user_id=user_id,
             agent_id=agent_id,
             limit=limit,
@@ -108,6 +110,7 @@ class ConversationService:
         '''
         获取会话详情
         '''
+        mysql_service = MySQLService()
         self._check_user_exists(user_id)
         self._check_conversation_owner(conversation_id, user_id)
-        return self.mysql_service.get_conversation_by_id(conversation_id)
+        return mysql_service.get_conversation_by_id(conversation_id)

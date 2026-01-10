@@ -29,6 +29,9 @@ class AgentListResponse(BaseModel):
 class AgentRunRequest(BaseModel):
     user_input: str
     conversation_id: int
-    user_id: int
     workflow: Literal["poetry_game", "rag_chat"] = "rag_chat"
     history_limit: int = 10
+
+
+class AgentRunResponse(BaseModel):
+    message: str
