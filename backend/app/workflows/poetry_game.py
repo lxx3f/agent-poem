@@ -1,11 +1,11 @@
 from typing import List
 
-from backend.app.llm.types import LLMMessage
-from backend.app.services.llm_service import LLMService
-from backend.app.services.mysql_service import MySQLService
-from backend.app.services.conversation_service import ConversationService
-from backend.app.services.message_service import MessageService
-from backend.app.services.poetry_service import PoetryService
+from app.llm.types import LLMMessage
+from app.services.llm_service import LLMService
+from app.services.mysql_service import MySQLService
+from app.services.conversation_service import ConversationService
+from app.services.message_service import MessageService
+from app.services.poetry_service import PoetryService
 
 
 class PoetryGameWorkflow:

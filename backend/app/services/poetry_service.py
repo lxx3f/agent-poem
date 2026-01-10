@@ -1,9 +1,9 @@
 from typing import Any, Dict, List, Literal
 
-from backend.app.services.embedding_service import Embedding_service
-from backend.app.services.milvus_service import MilvusService
-from backend.app.services.mysql_service import MySQLService
-from backend.app.core.exceptions import BusinessException
+from app.services.embedding_service import Embedding_service
+from app.services.milvus_service import MilvusService
+from app.services.mysql_service import MySQLService
+from app.core.exceptions import BusinessException
 
 SearchType = Literal["keyword", "vector", "hybrid"]
 

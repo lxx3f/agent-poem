@@ -3,9 +3,9 @@ from typing import Optional, Dict, Any
 import hashlib
 from passlib.context import CryptContext
 
-from backend.app.core.config import settings
-from backend.app.services.mysql_service import MySQLService
-from backend.app.core.exceptions import BusinessException
+from app.core.config import settings
+from app.services.mysql_service import MySQLService
+from app.core.exceptions import BusinessException
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

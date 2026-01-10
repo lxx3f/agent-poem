@@ -1,8 +1,8 @@
 from typing import List
 
-from backend.app.llm.base import LLMServiceBase
-from backend.app.llm.types import LLMMessage
-from backend.app.services.message_service import MessageService
+from app.llm.base import LLMServiceBase
+from app.llm.types import LLMMessage
+from app.services.message_service import MessageService
 
 
 class MockLLMService(LLMServiceBase):

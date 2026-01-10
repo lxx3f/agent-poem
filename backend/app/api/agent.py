@@ -1,18 +1,18 @@
 from fastapi import APIRouter, Depends
 from typing import List, cast
 
-from backend.app.core.jwt import get_current_user
-from backend.app.core.response import StandardResponse, success_response, error_response
-from backend.app.services.conversation_service import ConversationService
-from backend.app.services.message_service import MessageService
-from backend.app.services.agent_service import AgentService
-from backend.app.schemas.agent import (AgentListRequest, AgentItem,
-                                       AgentRunRequest, AgentListResponse)
+from app.core.jwt import get_current_user
+from app.core.response import StandardResponse, success_response, error_response
+from app.services.conversation_service import ConversationService
+from app.services.message_service import MessageService
+from app.services.agent_service import AgentService
+from app.schemas.agent import (AgentListRequest, AgentItem, AgentRunRequest,
+                               AgentListResponse)
 
 router = APIRouter(prefix="/api/agent", tags=["Agent"])
 
 
-@router.get("/list", response_model=StandardResponse[AgentListResponse])
+@router.post("/list", response_model=StandardResponse[AgentListResponse])
 def list_agents(
         req: AgentListRequest,
         current_user=Depends(get_current_user),

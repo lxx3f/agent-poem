@@ -4,8 +4,8 @@
 import pymysql
 from typing import List, Any, Dict, Optional, cast
 from datetime import datetime, timezone
-from backend.app.core.exceptions import BusinessException
-from backend.app.core.config import settings
+from app.core.exceptions import BusinessException
+from app.core.config import settings
 
 
 class MySQLService:

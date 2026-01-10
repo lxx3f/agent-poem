@@ -1,6 +1,6 @@
 from typing import List, Any
 
-from backend.app.rag.poetry_rag import PoetryRAG
+from app.rag.poetry_rag import PoetryRAG
 
 
 class RAGService:

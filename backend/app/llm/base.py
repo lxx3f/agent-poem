@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from backend.app.llm.types import LLMMessage
+from app.llm.types import LLMMessage
 
 
 class LLMServiceBase(ABC):

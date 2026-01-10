@@ -3,13 +3,13 @@ from typing import List, cast
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam
 
-from backend.app.core.config import settings
-from backend.app.llm.base import LLMServiceBase
-from backend.app.llm.types import LLMMessage
-from backend.app.llm.mock import MockLLMService
-from backend.app.llm.OpenAI import OpenAILLMService
-from backend.app.llm.DeepSeek import DeepSeekLLMService
-from backend.app.llm.Qwen import QwenLLMService
+from app.core.config import settings
+from app.llm.base import LLMServiceBase
+from app.llm.types import LLMMessage
+from app.llm.mock import MockLLMService
+from app.llm.OpenAI import OpenAILLMService
+from app.llm.DeepSeek import DeepSeekLLMService
+from app.llm.Qwen import QwenLLMService
 
 
 def get_llm_service() -> LLMServiceBase:

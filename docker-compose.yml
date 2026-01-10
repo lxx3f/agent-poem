@@ -106,6 +106,34 @@ services:
     networks:
       - shiyun-network
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ${PROJECT_NAME}-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=${MYSQL_CONTAINER_PORT}
+      - MILVUS_HOST=milvus-standalone
+      - MILVUS_PORT=${MILVUS_PORT}
+      - REDIS_HOST=redis
+      - REDIS_PORT=${REDIS_PORT}
+      - MINIO_HOST=minio
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+
+    ports:
+      - "${BACKEND_PORT}:8000"
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - mysql
+      - milvus-standalone
+    networks:
+      - shiyun-network
+
 networks:
   shiyun-network:  # 网络名引用变量，动态生成
     driver: bridge
