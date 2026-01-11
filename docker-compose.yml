@@ -90,6 +90,47 @@ services:
     networks:
       - shiyun-network
 
+  # ollama服务
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ${PROJECT_NAME}-ollama
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./database/ollama_data:/ollama_data
+    networks:
+      - shiyun-network
+    deploy:
+      resources:
+        limits:
+          memory: "4g"
+        reservations:
+          memory: "512m"
+
+  # Ollama模型初始化服务
+  ollama-init:
+    image: curlimages/curl:latest
+    container_name: ${PROJECT_NAME}-ollama-init
+    depends_on:
+      - ollama
+    command: |
+      sh -c '
+        echo "Waiting for Ollama to start...";
+        until curl -sf http://ollama:11434/api/tags; do sleep 2; echo "Waiting for Ollama to start..."; done;
+        echo "Ollama is running, pulling nomic-embed-text model...";
+        curl -X POST http://ollama:11434/api/pull -H "Content-Type: application/json" -d "{\"name\":\"nomic-embed-text\"}";
+        sleep 5;
+        echo "Checking if model is ready...";
+        until curl -sf http://ollama:11434/api/tags | grep -q "nomic-embed-text"; do
+          echo "Model still downloading, waiting...";
+          sleep 10;
+        done;
+        echo "Model nomic-embed-text is ready!"
+      '
+    networks:
+      - shiyun-network
+
   # milvus依赖项
   minio:
     image: minio/minio:RELEASE.2023-03-20T20-16-18Z
@@ -123,7 +164,8 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=${REDIS_PORT}
       - MINIO_HOST=minio
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_BASE_URL=http://ollama:11434
+      # - OLLAMA_BASE_URL=http://host.docker.internal:11434
 
     ports:
       - "${BACKEND_PORT}:8000"
@@ -132,6 +174,7 @@ services:
     depends_on:
       - mysql
       - milvus-standalone
+      - ollama-init
     networks:
       - shiyun-network
 
