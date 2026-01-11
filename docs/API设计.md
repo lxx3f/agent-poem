@@ -1,16 +1,4 @@
-# 一、整体 API 设计原则
-
-1. **poetry = 工具层（Tool API）**
-
-   * 可被前端直接调用
-   * 也可被 Agent 调用
-2. **agent = 智能层（Orchestration）**
-
-   * 不直接暴露数据库
-   * 只组合、调度工具
-3. **Agent 不“查数据库”，Agent“调用工具”**
-
----
+# API设计文档
 
 # 统一响应结构
 
@@ -32,107 +20,336 @@
 ---
 设计原则：
 service层写处理逻辑，返回dict，api层封装
----
 
-# 二、Poetry API（基础能力层）
+## 模块划分
+## 1. 认证接口 (Auth API)
 
-文件位置：
+### 1.1 用户注册
+- **接口路径**: `POST /api/auth/register`
+- **功能**: 注册新用户
+- **请求体**:
+  ```json
+  {
+    "email": "string",
+    "password": "string",
+    "nickname": "string"
+  }
+  ```
+- **响应体**:
+  ```json
+  {
+    "code": 200,
+    "message": "注册成功",
+    "data": {
+      "id": "number",
+      "email": "string",
+      "nickname": "string"
+    }
+  }
+  ```
 
-```
-backend/app/api/poetry.py
-backend/app/services/poetry_service.py
-```
+### 1.2 用户登录
+- **接口路径**: `POST /api/auth/login`
+- **功能**: 用户登录
+- **请求体**:
+  ```json
+  {
+    "email": "string",
+    "password": "string"
+  }
+  ```
+- **响应体**:
+  ```json
+  {
+    "code": 200,
+    "message": "登录成功",
+    "data": {
+      "access_token": "string",
+      "token_type": "string"
+    }
+  }
+  ```
 
----
+### 1.3 获取当前用户信息
+- **接口路径**: `GET /api/auth/me`
+- **功能**: 获取当前登录用户信息
+- **认证**: 需要在Header中携带JWT Token
+- **响应体**:
+  ```json
+  {
+    "code": 200,
+    "data": {
+      "id": "number",
+      "email": "string",
+      "nickname": "string",
+      "created_at": "datetime",
+      "updated_at": "datetime"
+    }
+  }
+  ```
 
-## 1️. 检索诗词
+### 1.4 更新用户信息
+- **接口路径**: `POST /api/auth/update`
+- **功能**: 更新用户信息
+- **认证**: 需要在Header中携带JWT Token
+- **请求体**:
+  ```json
+  {
+    "nickname": "string"
+  }
+  ```
+- **响应体**:
+  ```json
+  {
+    "code": 200,
+    "message": "更新成功",
+    "data": null
+  }
+  ```
 
-该接口用于根据用户输入的查询文本，从诗词库中检索相关诗词，支持三种检索模式：
+## 2. 诗词接口 (Poetry API)
 
-- 关键词搜索（keyword）：基于 MySQL LIKE 的文本匹配
+### 2.1 搜索诗词
+- **接口路径**: `POST /api/poetry/search`
+- **功能**: 搜索诗词
+- **请求体**:
+  ```json
+  {
+    "query": "string",           // 搜索查询词
+    "search_type": "string",     // 搜索类型: semantic, keyword, random
+    "top_k": "number"            // 返回结果数量，默认5
+  }
+  ```
+- **响应体**:
+  ```json
+  {
+    "code": 200,
+    "data": {
+      "total": "number",
+      "items": [
+        {
+          "id": "number",
+          "title": "string",
+          "dynasty": "string",
+          "writer": "string",
+          "content": "string",
+          "score": "number"
+        }
+      ]
+    }
+  }
+  ```
 
-- 向量搜索（vector）：基于 Embedding + Milvus 的语义相似度检索
+## 3. 智能体接口 (Agent API)
 
-- 混合搜索（hybrid）（默认）：关键词搜索与向量搜索结果合并去重
+### 3.1 列出所有智能体
+- **接口路径**: `POST /api/agent/list`
+- **功能**: 获取所有可用的智能体列表
+- **认证**: 需要在Header中携带JWT Token
+- **请求体**:
+  ```json
+  {
+    "limit": "number"            // 限制返回数量，默认20
+  }
+  ```
+- **响应体**:
+  ```json
+  {
+    "code": 200,
+    "data": {
+      "total": "number",
+      "agents": [
+        {
+          "id": "number",
+          "name": "string",
+          "code": "string",
+          "description": "string",
+          "workflow_key": "string",
+          "system_prompt": "string",
+          "parameters": "json",
+          "llm_config": "json",
+          "is_active": "number",
+          "created_at": "datetime",
+          "updated_at": "datetime"
+        }
+      ]
+    }
+  }
+  ```
 
-### Endpoint
+### 3.2 获取智能体详情
+- **接口路径**: `GET /api/agent/{agent_id}`
+- **功能**: 获取特定智能体的详细信息
+- **认证**: 需要在Header中携带JWT Token
+- **路径参数**:
+  - `agent_id`: 智能体ID
+- **响应体**:
+  ```json
+  {
+    "code": 200,
+    "data": {
+      "id": "number",
+      "name": "string",
+      "code": "string",
+      "description": "string",
+      "workflow_key": "string",
+      "system_prompt": "string",
+      "parameters": "json",
+      "llm_config": "json",
+      "is_active": "number",
+      "created_at": "datetime",
+      "updated_at": "datetime"
+    }
+  }
+  ```
 
-```http
-POST /api/poetry/search
-```
+### 3.3 运行智能体
+- **接口路径**: `POST /api/agent/{agent_id}/run`
+- **功能**: 运行特定智能体
+- **认证**: 需要在Header中携带JWT Token
+- **路径参数**:
+  - `agent_id`: 智能体ID
+- **请求体**:
+  ```json
+  {
+    "user_input": "string",      // 用户输入
+    "conversation_id": "number", // 会话ID，可选
+    "workflow": "string"         // 工作流，可选
+  }
+  ```
+- **响应体**:
+  ```json
+  {
+    "code": 200,
+    "data": {
+      "message": "string"         // 智能体回复
+    }
+  }
+  ```
 
+## 4. 会话接口 (Conversation API)
 
-### 请求体（Request Body）
-```json
-{
-  "query": "明月",
-  "search_type": "hybrid",
-  "top_k": 5
-}
-```
+### 4.1 创建会话
+- **接口路径**: `POST /api/conversation/create`
+- **功能**: 创建新会话
+- **认证**: 需要在Header中携带JWT Token
+- **请求体**:
+  ```json
+  {
+    "agent_id": "number",        // 智能体ID
+    "title": "string"            // 会话标题，可选
+  }
+  ```
+- **响应体**:
+  ```json
+  {
+    "code": 200,
+    "message": "创建成功",
+    "data": {
+      "conversation_id": "number"
+    }
+  }
+  ```
 
-### 参数说明
-| 参数名 | 类型 | 必填 | 默认值 | 说明 |
-|--- | ---- |  ---| ----   |  --- |
-| query |	string	| 是 |	-	 | 搜索关键词或查询文本 |
-|search_type |	string |	否	| hybrid	| 搜索模式：keyword /  vector / hybrid |
-| top_k	| integer	| 否 |	5 |	返回的最大诗词数量 |
+### 4.2 列出会话消息
+- **接口路径**: `POST /api/conversation/{conversation_id}/messages`
+- **功能**: 获取指定会话的消息列表
+- **认证**: 需要在Header中携带JWT Token
+- **路径参数**:
+  - `conversation_id`: 会话ID
+- **请求体**:
+  ```json
+  {
+    "limit": "number"            // 限制返回数量，默认50
+  }
+  ```
+- **响应体**:
+  ```json
+  {
+    "code": 200,
+    "data": {
+      "conversation_id": "number",
+      "total": "number",
+      "messages": [
+        {
+          "id": "number",
+          "conversation_id": "number",
+          "role": "string",        // user, assistant, system
+          "content": "string",
+          "status": "string",      // pending, done, failed
+          "created_at": "datetime"
+        }
+      ]
+    }
+  }
+  ```
 
-### 响应格式
- 
-5. 返回数据结构（PoetrySearchItem）
-```json
-{
-  "id": 123,
-  "title": "静夜思",
-  "dynasty": "唐",
-  "writer": "李白",
-  "content": "床前明月光，疑是地上霜。"
-}
-```
+### 4.3 列出用户会话
+- **接口路径**: `POST /api/conversation/list`
+- **功能**: 获取用户的会话列表
+- **认证**: 需要在Header中携带JWT Token
+- **请求体**:
+  ```json
+  {
+    "agent_id": "number",        // 智能体ID，可选
+    "limit": "number",           // 限制返回数量，默认20
+    "offset": "number"           // 偏移量，默认0
+  }
+  ```
+- **响应体**:
+  ```json
+  {
+    "code": 200,
+    "data": {
+      "total": "number",
+      "conversations": [
+        {
+          "id": "number",
+          "user_id": "number",
+          "title": "string",
+          "agent_id": "number",
+          "created_at": "datetime",
+          "updated_at": "datetime"
+        }
+      ]
+    }
+  }
+  ```
 
-### 字段说明
-| 字段名 | 类型 | 说明 |
-| ----- | ----- | --- |
-|id | integer	| 诗词唯一 ID |
-| title	| string | 诗词标题 |
-| dynasty	| string | 朝代 |
-| writer |string |作者 |
-| content	| string | 诗词正文 |
+### 4.4 删除会话
+- **接口路径**: `DELETE /api/conversation/{conversation_id}`
+- **功能**: 删除指定会话
+- **认证**: 需要在Header中携带JWT Token
+- **路径参数**:
+  - `conversation_id`: 会话ID
+- **响应体**:
+  ```json
+  {
+    "code": 200,
+    "message": "删除成功",
+    "data": null
+  }
+  ```
 
+## 5. 消息接口 (Message API)
 
-
----
-
-# 三、Agent API（智能编排层）
-
-
----
-
-# 四、Agent Prompt 设计
-
-Agent System Prompt 核心思想：
-
-```text
-你是一个中文古诗词智能助手。
-你不能编造诗词。
-所有诗词必须来自工具返回结果。
-你需要根据用户意图选择合适的工具。
-```
-
----
-
-# 五、Tool（函数）
-
-Agent 可调用的 Tool 列表：
-
-```json
-[
-  "keyword_search_poetry",
-  "semantic_search_poetry",
-  "search_sentence",
-  "get_poetry_detail"
-]
-```
-
----
+### 5.1 获取单条消息详情
+- **接口路径**: `GET /api/message/{message_id}`
+- **功能**: 获取单条消息的详细信息
+- **认证**: 需要在Header中携带JWT Token
+- **路径参数**:
+  - `message_id`: 消息ID
+- **响应体**:
+  ```json
+  {
+    "code": 200,
+    "data": {
+      "id": "number",
+      "conversation_id": "number",
+      "role": "string",          // user, assistant, system
+      "content": "string",
+      "status": "string",        // pending, done, failed
+      "created_at": "datetime"
+    }
+  }
+  ```
