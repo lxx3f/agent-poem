@@ -106,6 +106,7 @@ services:
     networks:
       - shiyun-network
 
+  # 后端服务
   backend:
     build:
       context: ./backend
@@ -131,6 +132,20 @@ services:
     depends_on:
       - mysql
       - milvus-standalone
+    networks:
+      - shiyun-network
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ${PROJECT_NAME}-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT}:80"
+    depends_on:
+      - backend
     networks:
       - shiyun-network
 

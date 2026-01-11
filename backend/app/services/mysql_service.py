@@ -229,7 +229,7 @@ class MySQLService:
         :rtype: Dict[str, Any]
         '''
         sql = """
-                SELECT id, email, username, created_at
+                SELECT id, email, username, created_at, updated_at
                 FROM users
                 WHERE id = %s
                 """
@@ -246,6 +246,7 @@ class MySQLService:
                 "email": row["email"],
                 "nickname": row["username"],
                 "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
             }
 
     def get_user_by_email(self, email: str) -> Dict[str, Any]:
@@ -259,7 +260,7 @@ class MySQLService:
         :rtype: Optional[Dict[str, Any]]
         '''
         sql = """
-                SELECT id, email, username, password_hash, created_at
+                SELECT id, email, username, password_hash, created_at, updated_at
                 FROM users
                 WHERE email = %s
                 """
@@ -277,6 +278,7 @@ class MySQLService:
                 "nickname": row["username"],
                 "password_hash": row["password_hash"],
                 "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
             }
 
     # =====================

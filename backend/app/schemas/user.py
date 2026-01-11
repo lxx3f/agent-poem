@@ -11,11 +11,18 @@ class UserRegisterRequest(BaseModel):
 
 class UserRegisterResponse(BaseModel):
     id: int
+    email: EmailStr
+    nickname: str
 
 
 class UserLoginRequest(BaseModel):
     email: EmailStr = Field(..., description="用户邮箱")
     password: str = Field(..., description="用户密码")
+
+
+class UserLoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
 
 
 class UserItem(BaseModel):

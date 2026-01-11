@@ -13,7 +13,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class UserService:
 
     def __init__(self):
-        self.mysql_service = MySQLService()
+        pass
 
     # ---------- 密码相关 ----------
 
@@ -46,13 +46,14 @@ class UserService:
         :return: 说明
         :rtype: Dict[str, Any]
         '''
+        mysql_service = MySQLService()
         # 1. 邮箱唯一性校验
-        if self.mysql_service.email_exists(email):
+        if mysql_service.email_exists(email):
             raise BusinessException(
                 400, "create user failed: email already registered")
         # 2. 插入用户
         password_hash = self._hash_password(password)
-        return self.mysql_service.create_user(
+        return mysql_service.create_user(
             email=email,
             nickname=nickname,
             password_hash=password_hash,
@@ -74,10 +75,11 @@ class UserService:
         :return: 说明
         :rtype: Dict[str, Any]
         '''
-        if self.mysql_service.email_exists(email) is False:
+        mysql_service = MySQLService()
+        if mysql_service.email_exists(email) is False:
             raise BusinessException(404,
                                     "authenticate failed: email not found")
-        user = self.mysql_service.get_user_by_email(email=email)
+        user = mysql_service.get_user_by_email(email=email)
         if not self._verify_password(password, user["password_hash"]):
             raise BusinessException(401,
                                     "authenticate failed: invalid password")
@@ -93,7 +95,8 @@ class UserService:
         :return: 说明
         :rtype: Dict[str, Any]
         '''
-        return self.mysql_service.get_user_by_id(user_id=user_id)
+        mysql_service = MySQLService()
+        return mysql_service.get_user_by_id(user_id=user_id)
 
     def update_user(self, user_id: int, nickname: str) -> None:
         '''
@@ -107,5 +110,5 @@ class UserService:
         :return: 说明
         :rtype: Dict[str, Any]
         '''
-        return self.mysql_service.update_user(user_id=user_id,
-                                              nickname=nickname)
+        mysql_service = MySQLService()
+        return mysql_service.update_user(user_id=user_id, nickname=nickname)

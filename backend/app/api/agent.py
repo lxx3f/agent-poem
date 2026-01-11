@@ -7,7 +7,7 @@ from app.services.conversation_service import ConversationService
 from app.services.message_service import MessageService
 from app.services.agent_service import AgentService
 from app.schemas.agent import (AgentListRequest, AgentItem, AgentRunRequest,
-                               AgentListResponse)
+                               AgentListResponse, AgentRunResponse)
 
 router = APIRouter(prefix="/api/agent", tags=["Agent"])
 
@@ -52,12 +52,22 @@ def get_agent(
     return success_response(agent)
 
 
-@router.post("/{agent_id}/run", response_model=StandardResponse[str])
+@router.post("/{agent_id}/run",
+             response_model=StandardResponse[AgentRunResponse])
 def run_agent(
         agent_id: int,
         req: AgentRunRequest,
         current_user=Depends(get_current_user),
 ):
+    '''
+    运行某个agent
+    
+    :param agent_id: agent ID
+    :type agent_id: int
+    :param req: 运行参数
+    :type req: AgentRunRequest
+    :param current_user: 当前用户
+    '''
     agent_service = AgentService()
     reply = agent_service.run_agent(
         agent_id=agent_id,
@@ -66,4 +76,4 @@ def run_agent(
         user_id=current_user["id"],
         workflow=req.workflow,
     )
-    return success_response(reply)
+    return success_response(AgentRunResponse(message=reply))

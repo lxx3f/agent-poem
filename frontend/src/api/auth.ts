@@ -1,22 +1,24 @@
 // 用户认证相关接口
 import request from '../utils/request';
 
+const prefix = '/auth';
+
 // 注册
 export function register(data: { email: string; password: string; nickname?: string }) {
-  return request.post('/api/auth/register', data);
+    return request.post(prefix + '/register', data);
 }
 
 // 登录
 export function login(data: { email: string; password: string }) {
-  return request.post('/api/auth/login', data);
+    return request.post(prefix + '/login', data);
 }
 
 // 获取当前用户信息
 export function getMe() {
-  return request.get('/api/auth/me');
+    return request.get(prefix + '/me');
 }
 
 // 更新用户信息
 export function updateProfile(data: { nickname: string }) {
-  return request.post('/api/auth/update', data);
+    return request.post(prefix + '/update', data);
 }

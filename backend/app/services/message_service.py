@@ -10,7 +10,7 @@ StatusType = Literal["pending", "done", "failed"]
 class MessageService:
 
     def __init__(self, mysql_service: MySQLService = MySQLService()):
-        self.mysql_service = mysql_service
+        pass
 
     # =====================
     # 校验相关
@@ -23,7 +23,8 @@ class MessageService:
         :param user_id: 说明
         :type user_id: int
         '''
-        if not self.mysql_service.user_exists(user_id):
+        mysql_service = MySQLService()
+        if not mysql_service.user_exists(user_id):
             raise BusinessException(
                 code=404,
                 message="User does not exist",
@@ -43,7 +44,8 @@ class MessageService:
         :param user_id: 说明
         :type user_id: int
         '''
-        if not self.mysql_service.conversation_belongs_to_user(
+        mysql_service = MySQLService()
+        if not mysql_service.conversation_belongs_to_user(
                 conversation_id,
                 user_id,
         ):
@@ -66,7 +68,8 @@ class MessageService:
         :param user_id: 说明
         :type user_id: int
         '''
-        if not self.mysql_service.message_belongs_to_user(
+        mysql_service = MySQLService()
+        if not mysql_service.message_belongs_to_user(
                 message_id,
                 user_id,
         ):
@@ -83,7 +86,8 @@ class MessageService:
         :param message_id: 说明
         :type message_id: int
         '''
-        if not self.mysql_service.message_exists(message_id):
+        mysql_service = MySQLService()
+        if not mysql_service.message_exists(message_id):
             raise BusinessException(
                 code=404,
                 message="Message does not exist",
@@ -110,12 +114,13 @@ class MessageService:
         :return: 消息列表
         :rtype: List[Dict[str, Any]]
         '''
+        mysql_service = MySQLService()
         # 1. 校验
         self._check_user_exists(user_id)
         self._check_conversation_owner(conversation_id, user_id)
 
         # 2. 获取消息列表
-        messages = self.mysql_service.get_messages_by_conversation(
+        messages = mysql_service.get_messages_by_conversation(
             conversation_id=conversation_id,
             limit=limit,
         )
@@ -144,12 +149,13 @@ class MessageService:
         :return: 说明
         :rtype: int
         '''
+        mysql_service = MySQLService()
         # 1. 校验
         self._check_user_exists(user_id)
         self._check_conversation_owner(conversation_id, user_id)
 
         # 2. 创建消息
-        message_id = self.mysql_service.create_message(
+        message_id = mysql_service.create_message(
             conversation_id=conversation_id,
             role=role,
             status=status,
@@ -171,7 +177,8 @@ class MessageService:
         :param status: 说明
         :type status: StatusType
         '''
-        self.mysql_service.update_message_status(
+        mysql_service = MySQLService()
+        mysql_service.update_message_status(
             message_id=message_id,
             status=status,
         )
@@ -190,8 +197,9 @@ class MessageService:
         :param content: 说明
         :type content: str
         '''
+        mysql_service = MySQLService()
         self._check_message_exists(message_id)
-        self.mysql_service.update_message_content(
+        mysql_service.update_message_content(
             message_id=message_id,
             content=content,
         )
@@ -211,7 +219,8 @@ class MessageService:
         :rtype: Optional[Dict[str, Any]]
         '''
         # 校验
+        mysql_service = MySQLService()
         self._check_user_exists(user_id)
         self._check_message_exists(message_id)
         self._check_message_owner(message_id, user_id)
-        return self.mysql_service.get_message_by_id(message_id=message_id)
+        return mysql_service.get_message_by_id(message_id=message_id)

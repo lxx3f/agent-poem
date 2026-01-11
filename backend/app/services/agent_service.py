@@ -12,7 +12,7 @@ class AgentService:
     '''
 
     def __init__(self) -> None:
-        self.mysql_service = MySQLService()
+        pass
 
     # =====================
     # Agent 相关
@@ -26,7 +26,8 @@ class AgentService:
         :return: agent 详情
         :rtype: Optional[Dict[str, Any]]
         '''
-        return self.mysql_service.get_agent_by_id(agent_id)
+        mysql_service = MySQLService()
+        return mysql_service.get_agent_by_id(agent_id)
 
     def list_agents(
         self,
@@ -40,7 +41,8 @@ class AgentService:
         :return: 所有 Agent 列表
         :rtype: List[Dict[str, Any]]
         '''
-        return self.mysql_service.get_agents(limit)
+        mysql_service = MySQLService()
+        return mysql_service.get_agents(limit)
 
     def run_agent(
         self,

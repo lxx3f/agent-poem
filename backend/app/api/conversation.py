@@ -7,8 +7,10 @@ from app.services.conversation_service import ConversationService
 from app.services.message_service import MessageService
 from app.schemas.conversation import (
     ConversationCreateRequest,
+    ConversationCreateResponse,
     ConversationListRequest,
     ConversationItem,
+    ConversationListResponse,
     MessageListRequest,
     MessageListResponse,
     MessageItem,
@@ -17,7 +19,8 @@ from app.schemas.conversation import (
 router = APIRouter(prefix="/api/conversation", tags=["Conversation"])
 
 
-@router.post("/create", response_model=StandardResponse[int])
+@router.post("/create",
+             response_model=StandardResponse[ConversationCreateResponse])
 def create_conversation(
         req: ConversationCreateRequest,
         current_user=Depends(get_current_user),
@@ -29,16 +32,18 @@ def create_conversation(
     :type req: ConversationCreateRequest
     :param current_user: 当前用户
     '''
-    service = ConversationService()
-    conversation_id = service.create_conversation(
+    conversation_service = ConversationService()
+    conversation_id = conversation_service.create_conversation(
         user_id=current_user["id"],
         agent_id=req.agent_id,
         title=req.title,
     )
-    return success_response(conversation_id)
+    return success_response(
+        message="创建成功",
+        data=ConversationCreateResponse(conversation_id=conversation_id))
 
 
-@router.post("/{conversation_id}",
+@router.post("/{conversation_id}/messages",
              response_model=StandardResponse[MessageListResponse])
 def list_messages_by_conversation(
         conversation_id: int,
@@ -52,22 +57,22 @@ def list_messages_by_conversation(
     :type req: MessageListRequest
     :param current_user: 当前用户
     '''
-    service = MessageService()
-    messages = service.get_messages_by_conversation(
+    message_service = MessageService()
+    messages = message_service.get_messages_by_conversation(
         conversation_id=conversation_id,
         user_id=current_user["id"],
         limit=req.limit,
     )
-    total = len(messages)
     response = MessageListResponse(
         conversation_id=conversation_id,
-        total=total,
+        total=len(messages),
         messages=[MessageItem(**msg) for msg in messages],
     )
     return success_response(response)
 
 
-@router.post("/list", response_model=StandardResponse[list[ConversationItem]])
+@router.post("/list",
+             response_model=StandardResponse[ConversationListResponse])
 def list_conversations(
         req: ConversationListRequest,
         current_user=Depends(get_current_user),
@@ -79,14 +84,17 @@ def list_conversations(
     :type req: ConversationListRequest
     :param current_user: 当前用户
     '''
-    service = ConversationService()
-    items = service.list_conversations(
+    conversation_service = ConversationService()
+    items = conversation_service.list_conversations(
         user_id=current_user["id"],
         agent_id=req.agent_id,
         limit=req.limit,
         offset=req.offset,
     )
-    return success_response(items)
+    response = ConversationListResponse(
+        total=len(items),
+        conversations=[ConversationItem(**item) for item in items])
+    return success_response(data=response)
 
 
 @router.delete("/{conversation_id}", response_model=StandardResponse[None])
@@ -101,9 +109,9 @@ def delete_conversation(
     :type conversation_id: int
     :param current_user: 当前用户
     '''
-    service = ConversationService()
-    service.delete_conversation(
+    conversation_service = ConversationService()
+    conversation_service.delete_conversation(
         conversation_id=conversation_id,
         user_id=current_user["id"],
     )
-    return success_response(None)
+    return success_response(message="删除成功")
