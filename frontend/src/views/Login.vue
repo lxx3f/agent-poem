@@ -66,8 +66,69 @@ const onSubmit = async () => {
 </script>
 
 <style scoped>
-.error { color: red; margin-top: 0.5rem; }
-.register-link { margin-top: 1rem; text-align: center; }
-.register-link a { color: #007bff; text-decoration: none; }
-.register-link a:hover { text-decoration: underline; }
+.login-form {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 2rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.form-item label {
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.form-item input {
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  width: 100%; /* 确保输入框占满容器 */
+  box-sizing: border-box; /* 包含padding在内的总宽度计算 */
+}
+
+.form-item button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.form-item button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.error { 
+  color: red; 
+  margin-top: 0.5rem; 
+  text-align: center;
+}
+
+.register-link { 
+  margin-top: 1rem; 
+  text-align: center; 
+}
+
+.register-link a { 
+  color: #007bff; 
+  text-decoration: none; 
+}
+
+.register-link a:hover { 
+  text-decoration: underline; 
+}
 </style>
