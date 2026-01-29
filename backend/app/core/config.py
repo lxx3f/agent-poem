@@ -89,6 +89,8 @@ class Settings(BaseSettings):
 
     # Ollama(Embedding)
     OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "nomic-embed-text"
+    EMBEDDING_DIM: int = 768
 
     # 交互日志配置
     log_batch_size: int = 1000  # 批量写入大小
