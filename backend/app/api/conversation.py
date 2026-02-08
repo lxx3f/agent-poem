@@ -37,6 +37,7 @@ def create_conversation(
         user_id=current_user["id"],
         agent_id=req.agent_id,
         title=req.title,
+        memory_data=req.memory_data  # 使用请求中的memory_data
     )
     return success_response(
         message="创建成功",
@@ -115,3 +116,27 @@ def delete_conversation(
         user_id=current_user["id"],
     )
     return success_response(message="删除成功")
+
+
+@router.put("/{conversation_id}/memory", response_model=StandardResponse[None])
+def update_conversation_memory(
+        conversation_id: int,
+        memory_data: dict,
+        current_user=Depends(get_current_user),
+):
+    '''
+    更新会话的短期记忆数据
+    
+    :param conversation_id: 会话 ID
+    :type conversation_id: int
+    :param memory_data: 记忆数据
+    :type memory_data: dict
+    :param current_user: 当前用户
+    '''
+    conversation_service = ConversationService()
+    conversation_service.update_conversation_memory(
+        conversation_id=conversation_id,
+        user_id=current_user["id"],
+        memory_data=memory_data,
+    )
+    return success_response(message="更新成功")

@@ -57,22 +57,20 @@ class ConversationService:
     # Conversation
     # =====================
 
-    def create_conversation(
-        self,
-        user_id: int,
-        agent_id: int,
-        title: str,
-    ) -> int:
+    def create_conversation(self,
+                            user_id: int,
+                            agent_id: int,
+                            title: str,
+                            memory_data: Optional[dict] = None) -> int:
         """
         创建新会话，返回 conversation_id
         """
         mysql_service = MySQLService()
         self._check_user_exists(user_id)
-        return mysql_service.create_conversation(
-            user_id=user_id,
-            agent_id=agent_id,
-            title=title,
-        )
+        return mysql_service.create_conversation(user_id=user_id,
+                                                 agent_id=agent_id,
+                                                 title=title,
+                                                 memory_data=memory_data)
 
     def delete_conversation(
         self,
@@ -114,3 +112,12 @@ class ConversationService:
         self._check_user_exists(user_id)
         self._check_conversation_owner(conversation_id, user_id)
         return mysql_service.get_conversation_by_id(conversation_id)
+
+    def update_conversation_memory(self, conversation_id: int, user_id: int,
+                                   memory_data: dict):
+        """
+        更新会话的短期记忆数据
+        """
+        mysql_service = MySQLService()
+        self._check_conversation_owner(conversation_id, user_id)
+        mysql_service.update_conversation_memory(conversation_id, memory_data)

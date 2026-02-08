@@ -2,8 +2,7 @@ from typing import List, Dict, Any, Optional, Literal
 
 from app.core.exceptions import BusinessException
 from app.services.mysql_service import MySQLService
-from app.workflows.poetry_game import PoetryGameWorkflow
-from app.workflows.rag_chat import RagChatWorkflow
+from app.agents.potery_agent import PoetryGameAgent
 
 
 class AgentService:
@@ -11,7 +10,7 @@ class AgentService:
     Agent 服务
     '''
 
-    def __init__(self) -> None:
+    def __init__(self, mysql_service: MySQLService = MySQLService()):
         pass
 
     # =====================
@@ -50,8 +49,7 @@ class AgentService:
         user_input: str,
         conversation_id: int,
         user_id: int,
-        workflow: Literal["poetry_game", "rag_chat"] = "rag_chat",
-    ) -> str:
+    ) -> None:
         '''
         运行 Agent
         
@@ -63,23 +61,9 @@ class AgentService:
         :type conversation_id: int
         :param user_id: 用户 ID
         :type user_id: int
-        :param workflow: 工作流名称
-        :type workflow: Literal["poetry_game", "rag_chat"]
         '''
 
-        # 调用 workflow
-        if workflow == "poetry_game":
-            return PoetryGameWorkflow().run(
-                conversation_id=conversation_id,
-                user_id=user_id,
-                user_input=user_input,
-            )
-        elif workflow == "rag_chat":
-
-            return RagChatWorkflow().run(
-                conversation_id=conversation_id,
-                user_id=user_id,
-                user_input=user_input,
-            )
-        else:
-            raise BusinessException("无效的工作流")
+        agent_loop = PoetryGameAgent(conversation_id=conversation_id,
+                                     user_id=user_id,
+                                     agent_id=agent_id)
+        return agent_loop.run(user_input=user_input)

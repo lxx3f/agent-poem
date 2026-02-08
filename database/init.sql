@@ -199,6 +199,7 @@ CREATE TABLE conversations (
   user_id BIGINT NOT NULL COMMENT '所属用户ID',
   title VARCHAR(128) COMMENT '会话标题',
   agent_id BIGINT NOT NULL COMMENT '所属agentID',
+  memory_data JSON NULL COMMENT '短期记忆数据，以JSON格式存储',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -232,4 +233,27 @@ CREATE TABLE messages (
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会话消息表';
 
+-- ===============================
+-- Agent与用户关联及长期记忆表
+-- ===============================
+DROP TABLE IF EXISTS agent_user_memory;
+CREATE TABLE agent_user_memory (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+  agent_id BIGINT NOT NULL COMMENT 'Agent ID',
+  user_id BIGINT NOT NULL COMMENT '用户ID',
+  memory_data JSON COMMENT '长期记忆数据，以JSON格式存储',
+  last_interaction_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后交互时间',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  UNIQUE KEY uk_agent_user (agent_id, user_id),
+  CONSTRAINT fk_agent_user_memory_agents
+    FOREIGN KEY (agent_id)
+    REFERENCES agents(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_agent_user_memory_users
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Agent与用户关联及长期记忆表';
 

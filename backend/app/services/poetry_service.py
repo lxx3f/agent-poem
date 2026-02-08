@@ -9,6 +9,11 @@ SearchType = Literal["keyword", "vector", "hybrid"]
 
 
 class PoetryService:
+    """
+    古诗词服务
+    """
+
+    # TODO: 优化
 
     def __init__(
             self,

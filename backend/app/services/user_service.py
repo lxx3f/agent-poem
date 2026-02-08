@@ -11,6 +11,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class UserService:
+    """
+    用户管理服务
+    """
 
     def __init__(self):
         pass
@@ -36,14 +39,13 @@ class UserService:
         '''
         创建新用户，返回用户信息
         
-        :param self: 说明
-        :param email: 说明
+        :param email: 用户邮箱
         :type email: str
-        :param nickname: 说明
+        :param nickname: 用户昵称
         :type nickname: str
-        :param password: 说明
+        :param password: 用户密码
         :type password: str
-        :return: 说明
+        :return: 用户信息
         :rtype: Dict[str, Any]
         '''
         mysql_service = MySQLService()
@@ -67,12 +69,11 @@ class UserService:
         '''
         认证用户，成功则返回用户信息, 失败则抛出异常
         
-        :param self: 说明
-        :param email: 说明
+        :param email: 用户邮箱
         :type email: str
-        :param password: 说明
+        :param password: 用户密码
         :type password: str
-        :return: 说明
+        :return: 用户信息
         :rtype: Dict[str, Any]
         '''
         mysql_service = MySQLService()
@@ -89,10 +90,9 @@ class UserService:
         '''
         根据 user_id 获取用户信息
         
-        :param self: 说明
-        :param user_id: 说明
+        :param user_id: 用户 id
         :type user_id: int
-        :return: 说明
+        :return: 用户信息
         :rtype: Dict[str, Any]
         '''
         mysql_service = MySQLService()
@@ -102,12 +102,11 @@ class UserService:
         '''
         更新用户信息
 
-        :param self: 说明
-        :param user_id: 说明
+        :param user_id: 用户 id
         :type user_id: int
-        :param nickname: 说明
+        :param nickname: 用户昵称
         :type nickname: str
-        :return: 说明
+        :return: 用户信息
         :rtype: Dict[str, Any]
         '''
         mysql_service = MySQLService()
