@@ -1,14 +1,22 @@
 '''
 提供基础的 MySQL 数据库操作服务
 '''
+import json
 import pymysql
-from typing import List, Any, Dict, Optional, cast
+from typing import Any, Dict, List, Optional
 from datetime import datetime, timezone
+from pymysql.cursors import DictCursor
+
 from app.core.exceptions import BusinessException
 from app.core.config import settings
 
 
 class MySQLService:
+    """
+    MySQL 数据库操作服务
+    """
+
+    # TODO: 连接池优化
 
     def __init__(self):
         self.conn = self.get_conn()
@@ -28,7 +36,7 @@ class MySQLService:
             password=settings.db_password,
             database=settings.db_name,
             charset=settings.db_charset,
-            cursorclass=pymysql.cursors.DictCursor,
+            cursorclass=DictCursor,
             autocommit=True,
         )
 
@@ -60,7 +68,7 @@ class MySQLService:
         """
         like = f"%{keyword}%"
 
-        with self.conn.cursor(pymysql.cursors.DictCursor) as cursor:
+        with self.conn.cursor(DictCursor) as cursor:
             cursor.execute(sql, (like, like, limit))
             rows = cursor.fetchall()
         return [row["id"] for row in rows]
@@ -89,7 +97,7 @@ class MySQLService:
         LEFT JOIN writer w ON p.writer_id = w.id
         WHERE p.id IN ({",".join(["%s"] * len(ids))})
     """
-        with self.conn.cursor(pymysql.cursors.DictCursor) as cursor:
+        with self.conn.cursor(DictCursor) as cursor:
             cursor.execute(sql, tuple(ids))
             rows = cursor.fetchall()
         return list(rows)
@@ -233,7 +241,7 @@ class MySQLService:
                 FROM users
                 WHERE id = %s
                 """
-        with self.conn.cursor(pymysql.cursors.DictCursor) as cursor:
+        with self.conn.cursor(DictCursor) as cursor:
             cursor.execute(
                 sql,
                 (user_id, ),
@@ -264,7 +272,7 @@ class MySQLService:
                 FROM users
                 WHERE email = %s
                 """
-        with self.conn.cursor(pymysql.cursors.DictCursor) as cursor:
+        with self.conn.cursor(DictCursor) as cursor:
             cursor.execute(
                 sql,
                 (email, ),
@@ -299,7 +307,7 @@ class MySQLService:
                 FROM agents
                 LIMIT %s
                 """
-        with self.conn.cursor(pymysql.cursors.DictCursor) as cursor:
+        with self.conn.cursor(DictCursor) as cursor:
             cursor.execute(sql, (limit, ))
             return list(cursor.fetchall())
 
@@ -318,7 +326,7 @@ class MySQLService:
                 FROM agents
                 WHERE id = %s
                 """
-        with self.conn.cursor(pymysql.cursors.DictCursor) as cursor:
+        with self.conn.cursor(DictCursor) as cursor:
             cursor.execute(sql, (agent_id, ))
             row = cursor.fetchone()
             if row is None:
@@ -346,22 +354,22 @@ class MySQLService:
             cursor.execute(sql, (conversation_id, ))
             return cursor.fetchone() is not None
 
-    def create_conversation(
-        self,
-        user_id: int,
-        agent_id: int,
-        title: str,
-    ) -> int:
+    def create_conversation(self,
+                            user_id: int,
+                            agent_id: int,
+                            title: str,
+                            memory_data: Optional[dict] = None) -> int:
         '''
         创建新会话，返回 conversation_id
         '''
         sql = """
-        INSERT INTO conversations (user_id, title, agent_id, created_at, updated_at)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO conversations (user_id, title, agent_id, memory_data, created_at, updated_at)
+        VALUES (%s, %s, %s, %s, %s, %s)
         """
-        cursor = self.conn.cursor(pymysql.cursors.DictCursor)
+        cursor = self.conn.cursor(DictCursor)
         now = datetime.now(timezone.utc)
-        cursor.execute(sql, (user_id, title, agent_id, now, now))
+        memory_json = json.dumps(memory_data) if memory_data else None
+        cursor.execute(sql, (user_id, title, agent_id, memory_json, now, now))
         return cursor.lastrowid
 
     def delete_conversation(
@@ -378,7 +386,7 @@ class MySQLService:
         :rtype: None
         '''
         sql = "DELETE FROM conversations WHERE id = %s"
-        cursor = self.conn.cursor(pymysql.cursors.DictCursor)
+        cursor = self.conn.cursor(DictCursor)
         cursor.execute(sql, (conversation_id, ))
 
     def get_conversations_by_user_agent(
@@ -404,15 +412,24 @@ class MySQLService:
         :rtype: List[Dict[str, Any]]
         '''
         sql = """
-        SELECT id, title, agent_id, created_at, updated_at
+        SELECT id, title, agent_id, memory_data, created_at, updated_at
         FROM conversations
         WHERE user_id = %s AND agent_id = %s
         ORDER BY updated_at DESC
         LIMIT %s OFFSET %s
         """
-        cursor = self.conn.cursor(pymysql.cursors.DictCursor)
+        cursor = self.conn.cursor(DictCursor)
         cursor.execute(sql, (user_id, agent_id, limit, offset))
         rows = cursor.fetchall()
+
+        # 处理memory_data字段，将其从JSON字符串转换为Python对象
+        for row in rows:
+            if row['memory_data']:
+                try:
+                    row['memory_data'] = json.loads(row['memory_data'])
+                except (json.JSONDecodeError, TypeError):
+                    row['memory_data'] = {}
+
         return list(rows)
 
     def conversation_belongs_to_user(
@@ -455,16 +472,47 @@ class MySQLService:
         :rtype: Dict[str, Any]
         '''
         sql = """
-        SELECT id, user_id, title, agent_id, created_at, updated_at
+        SELECT id, user_id, title, agent_id, memory_data, created_at, updated_at
         FROM conversations
         WHERE id = %s
         """
-        cursor = self.conn.cursor(pymysql.cursors.DictCursor)
+        cursor = self.conn.cursor(DictCursor)
         cursor.execute(sql, (conversation_id, ))
         row = cursor.fetchone()
         if row is None:
             raise BusinessException(404, "mysql error: conversation not found")
+
+        # 处理memory_data字段，将其从JSON字符串转换为Python对象
+        if row['memory_data']:
+            try:
+                row['memory_data'] = json.loads(row['memory_data'])
+            except (json.JSONDecodeError, TypeError):
+                row['memory_data'] = {}
+
         return row
+
+    def update_conversation_memory(self, conversation_id: int,
+                                   memory_data: dict) -> None:
+        '''
+        更新会话的短期记忆数据
+        
+        :param self: 说明
+        :param conversation_id: 说明
+        :type conversation_id: int
+        :param memory_data: 说明
+        :type memory_data: dict
+        :return: 说明
+        :rtype: None
+        '''
+        sql = """
+        UPDATE conversations
+        SET memory_data = %s, updated_at = %s
+        WHERE id = %s
+        """
+        cursor = self.conn.cursor(DictCursor)
+        now = datetime.now(timezone.utc)
+        memory_json = json.dumps(memory_data) if memory_data else None
+        cursor.execute(sql, (memory_json, now, conversation_id))
 
     # =====================
     # Message
@@ -515,7 +563,7 @@ class MySQLService:
         INSERT INTO messages (conversation_id, role, status, content, created_at)
         VALUES (%s, %s, %s, %s, %s)
         """
-        cursor = self.conn.cursor(pymysql.cursors.DictCursor)
+        cursor = self.conn.cursor(DictCursor)
         now = datetime.now(timezone.utc)
         cursor.execute(
             sql,
@@ -537,7 +585,7 @@ class MySQLService:
         :rtype: None
         '''
         sql = "DELETE FROM messages WHERE id = %s"
-        cursor = self.conn.cursor(pymysql.cursors.DictCursor)
+        cursor = self.conn.cursor(DictCursor)
         cursor.execute(sql, (message_id, ))
 
     def update_message_status(
@@ -561,7 +609,7 @@ class MySQLService:
         SET status = %s
         WHERE id = %s
         """
-        cursor = self.conn.cursor(pymysql.cursors.DictCursor)
+        cursor = self.conn.cursor(DictCursor)
         cursor.execute(sql, (status, message_id))
 
     def update_message_content(
@@ -585,7 +633,7 @@ class MySQLService:
         SET content = %s
         WHERE id = %s
         """
-        cursor = self.conn.cursor(pymysql.cursors.DictCursor)
+        cursor = self.conn.cursor(DictCursor)
         cursor.execute(sql, (content, message_id))
 
     def get_messages_by_conversation(
@@ -611,7 +659,7 @@ class MySQLService:
         ORDER BY created_at ASC
         LIMIT %s
         """
-        cursor = self.conn.cursor(pymysql.cursors.DictCursor)
+        cursor = self.conn.cursor(DictCursor)
         cursor.execute(sql, (conversation_id, limit))
         rows = cursor.fetchall()
         return list(rows)
@@ -634,7 +682,7 @@ class MySQLService:
         FROM messages
         WHERE id = %s
         """
-        cursor = self.conn.cursor(pymysql.cursors.DictCursor)
+        cursor = self.conn.cursor(DictCursor)
         cursor.execute(sql, (message_id, ))
         row = cursor.fetchone()
         if row is None:
@@ -667,3 +715,127 @@ class MySQLService:
         cursor = self.conn.cursor()
         cursor.execute(sql, (message_id, user_id))
         return cursor.fetchone() is not None
+
+    # =====================
+    # Agent-User Memory
+    # =====================
+    def get_agent_user_memory(self, agent_id: int,
+                              user_id: int) -> Optional[Dict[str, Any]]:
+        '''
+        获取特定agent和用户的长期记忆信息
+        
+        :param agent_id: Agent ID
+        :type agent_id: int
+        :param user_id: 用户 ID
+        :type user_id: int
+        :return: 记忆数据，如果不存在则返回None
+        :rtype: Optional[Dict[str, Any]]
+        '''
+        sql = """
+        SELECT id, agent_id, user_id, memory_data, last_interaction_time, created_at, updated_at
+        FROM agent_user_memory
+        WHERE agent_id = %s AND user_id = %s
+        """
+        with self.conn.cursor(DictCursor) as cursor:
+            cursor.execute(sql, (agent_id, user_id))
+            row = cursor.fetchone()
+            return row
+
+    def create_or_update_agent_user_memory(self, agent_id: int, user_id: int,
+                                           memory_data: Dict[str, Any]) -> int:
+        '''
+        创建或更新agent和用户的长期记忆信息
+        
+        :param agent_id: Agent ID
+        :type agent_id: int
+        :param user_id: 用户 ID
+        :type user_id: int
+        :param memory_data: 记忆数据
+        :type memory_data: Dict[str, Any]
+        :return: 记忆记录的ID
+        :rtype: int
+        '''
+        # 先尝试更新现有记录
+        update_sql = """
+        UPDATE agent_user_memory
+        SET memory_data = JSON_MERGE_PATCH(COALESCE(memory_data, '{}'), %s), last_interaction_time = %s, updated_at = %s
+        WHERE agent_id = %s AND user_id = %s
+        """
+        now = datetime.now(timezone.utc)
+        with self.conn.cursor() as cursor:
+            cursor.execute(update_sql, (str(memory_data).replace(
+                "'", '"'), now, now, agent_id, user_id))
+            # 检查是否有更新行数
+            if cursor.rowcount > 0:
+                # 如果更新成功，获取该行的ID
+                select_sql = "SELECT id FROM agent_user_memory WHERE agent_id = %s AND user_id = %s"
+                cursor.execute(select_sql, (agent_id, user_id))
+                result = cursor.fetchone()
+                if result:
+                    return result[0]
+
+        # 如果没有更新任何行，则插入新记录
+        insert_sql = """
+        INSERT INTO agent_user_memory (agent_id, user_id, memory_data, last_interaction_time, created_at, updated_at)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute(insert_sql,
+                           (agent_id, user_id, str(memory_data).replace(
+                               "'", '"'), now, now, now))
+            return cursor.lastrowid
+
+    def delete_agent_user_memory(self, agent_id: int, user_id: int) -> bool:
+        '''
+        删除特定agent和用户的长期记忆信息
+        
+        :param agent_id: Agent ID
+        :type agent_id: int
+        :param user_id: 用户 ID
+        :type user_id: int
+        :return: 是否删除成功
+        :rtype: bool
+        '''
+        sql = "DELETE FROM agent_user_memory WHERE agent_id = %s AND user_id = %s"
+        with self.conn.cursor() as cursor:
+            cursor.execute(sql, (agent_id, user_id))
+            return cursor.rowcount > 0
+
+    def get_all_memories_for_user(self, user_id: int) -> List[Dict[str, Any]]:
+        '''
+        获取用户在所有agent中的记忆信息
+        
+        :param user_id: 用户 ID
+        :type user_id: int
+        :return: 用户的所有记忆数据列表
+        :rtype: List[Dict[str, Any]]
+        '''
+        sql = """
+        SELECT id, agent_id, user_id, memory_data, last_interaction_time, created_at, updated_at
+        FROM agent_user_memory
+        WHERE user_id = %s
+        """
+        with self.conn.cursor(DictCursor) as cursor:
+            cursor.execute(sql, (user_id, ))
+            rows = cursor.fetchall()
+            return list(rows)
+
+    def get_all_memories_for_agent(self,
+                                   agent_id: int) -> List[Dict[str, Any]]:
+        '''
+        获取特定agent对所有用户的历史记忆信息
+        
+        :param agent_id: Agent ID
+        :type agent_id: int
+        :return: 特定agent的所有用户记忆数据列表
+        :rtype: List[Dict[str, Any]]
+        '''
+        sql = """
+        SELECT id, agent_id, user_id, memory_data, last_interaction_time, created_at, updated_at
+        FROM agent_user_memory
+        WHERE agent_id = %s
+        """
+        with self.conn.cursor(DictCursor) as cursor:
+            cursor.execute(sql, (agent_id, ))
+            rows = cursor.fetchall()
+            return list(rows)

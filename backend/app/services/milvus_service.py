@@ -6,6 +6,10 @@ from app.core.exceptions import BusinessException
 
 
 class MilvusService:
+    """
+    Milvus 服务
+    提供向量数据库的基本操作
+    """
 
     def __init__(self) -> None:
         self._connect()

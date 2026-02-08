@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Any, Dict, List
+from app.services.llm_service import LLMService
 
 
-class BaseAgent(ABC):
+class BaseAgentLoop(ABC):
+    """
+    Agent Loop 基类
+    """
 
-    @abstractmethod
-    def run(self, user_input: str, context: Dict[str, Any]) -> str:
-        """
-        输入：用户一句话 + 会话上下文
-        输出：最终回复文本
-        """
+    def __init__(self):
+        pass

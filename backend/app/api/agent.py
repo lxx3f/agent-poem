@@ -69,11 +69,10 @@ def run_agent(
     :param current_user: 当前用户
     '''
     agent_service = AgentService()
-    reply = agent_service.run_agent(
+    agent_service.run_agent(
         agent_id=agent_id,
         user_input=req.user_input,
         conversation_id=req.conversation_id,
         user_id=current_user["id"],
-        workflow=req.workflow,
     )
-    return success_response(AgentRunResponse(message=reply))
+    return success_response(AgentRunResponse(message="运行成功"))

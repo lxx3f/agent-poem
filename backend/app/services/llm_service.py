@@ -13,7 +13,13 @@ from app.llm.Qwen import QwenLLMService
 
 
 def get_llm_service() -> LLMServiceBase:
-    # return MockLLMService()
+    """
+    返回 LLM 服务类
+    根据配置选择对应的 LLM 服务类
+    
+    :return: LLM 服务
+    :rtype: LLMServiceBase
+    """
     provider = settings.llm_provider
 
     if provider == "openai":
@@ -27,9 +33,25 @@ def get_llm_service() -> LLMServiceBase:
 
 
 class LLMService:
+    """
+    LLM 服务类
+    """
 
     def __init__(self) -> None:
         self.service = get_llm_service()
 
     def chat(self, messages: List[LLMMessage]):
-        return self.service.chat(messages)
+        """
+        调用 LLM 服务进行对话
+        
+        :param messages: 对话消息
+        :type messages: List[LLMMessage]
+        :return: LLM 服务返回的响应
+        :rtype: str
+        """
+        res = self.service.chat(messages)
+        print("LLM Service Request:")
+        print(messages)
+        print("LLM Service Response:")
+        print(res)
+        return res

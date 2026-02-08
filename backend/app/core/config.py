@@ -79,7 +79,7 @@ class Settings(BaseSettings):
 
     # Qwen
     qwen_api_key: str | None = None
-    qwen_model: str = "qwen-turbo"
+    qwen_model: str = "qwen-max"
     qwen_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 
     # DeepSeek
