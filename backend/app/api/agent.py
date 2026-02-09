@@ -8,6 +8,8 @@ from app.services.message_service import MessageService
 from app.services.agent_service import AgentService
 from app.schemas.agent import (AgentListRequest, AgentItem, AgentRunRequest,
                                AgentListResponse, AgentRunResponse)
+from app.schemas.agent import (AgentUpdateSystemPromptResponse,
+                               AgentUpdateSystemPromptRequest)
 
 router = APIRouter(prefix="/api/agent", tags=["Agent"])
 
@@ -76,3 +78,22 @@ def run_agent(
         user_id=current_user["id"],
     )
     return success_response(AgentRunResponse(message="运行成功"))
+
+
+@router.post("/{agent_id}/update_system_prompt",
+             response_model=StandardResponse[AgentUpdateSystemPromptResponse])
+def update_agent_system_prompt(
+        agent_id: int,
+        req: AgentUpdateSystemPromptRequest,
+        current_user=Depends(get_current_user),
+):
+    '''
+    更新agent的system_prompt(游戏规则提示词)
+    '''
+    agent_service = AgentService()
+    affected_rows = agent_service.update_agent_system_prompt(
+        agent_id=agent_id, system_prompt=req.system_prompt)
+    return success_response(
+        AgentUpdateSystemPromptResponse(
+            message=f"成功更新agent {agent_id}的system_prompt，影响{affected_rows}行",
+            agent_id=agent_id))

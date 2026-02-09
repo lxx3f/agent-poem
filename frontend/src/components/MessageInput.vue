@@ -13,7 +13,7 @@
       />
       <button 
         type="submit" 
-        :disabled="isSendDisabled || isLoading"
+        :disabled="isSendDisabled"
         class="send-button"
       >
         <span v-if="!isLoading">发送</span>
@@ -141,6 +141,9 @@ onUnmounted(() => {
   border-top: 1px solid #e2e8f0;
   background: linear-gradient(to bottom, #ffffff, #f8fafc);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  /* 移除固定高度，让容器自适应内容 */
+  display: flex;
+  flex-direction: column;
 }
 
 .input-form {
@@ -153,6 +156,7 @@ onUnmounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border: 1px solid #e2e8f0;
   transition: border-color 0.2s, box-shadow 0.2s;
+  /* 移除固定高度限制，让表单自适应 */
 }
 
 .input-form:focus-within {

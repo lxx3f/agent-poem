@@ -51,8 +51,11 @@ onMounted(fetchMessages);
   padding: 1.5rem;
   background: #f9fafb;
   min-height: 500px;
-  width: 100%; /* 确保占满父容器的宽度 */
+  width: 100%;
+  scroll-padding-bottom: 80px; /* 滚动时的底部间距 */
+  scrollbar-gutter: stable; /* 保持滚动条空间 */
 }
+
 .message-item {
   padding: 1rem 1.25rem;
   border-radius: 12px;
@@ -63,24 +66,28 @@ onMounted(fetchMessages);
   gap: 0.5rem;
   animation: fadeInUp 0.3s ease-out;
   word-wrap: break-word;
-  max-width: 75%;  /* 统一设置最大宽度 */
+  max-width: 75%;
 }
+
 .message-item.user {
   background: linear-gradient(to right, #dbeafe, #e6f7ff);
   align-self: flex-end;
   border: 1px solid #bfdbfe;
 }
+
 .message-item.assistant {
   background: linear-gradient(to right, #f0fdf4, #f6ffed);
   align-self: flex-start;
   border: 1px solid #bbf7d0;
 }
+
 .message-item.system {
   background: linear-gradient(to right, #fffbeb, #fffbe6);
   align-self: center;
   border: 1px solid #fde68a;
-  max-width: 50%;  /* 系统消息较小的宽度 */
+  max-width: 50%;
 }
+
 .role {
   font-weight: 700;
   font-size: 0.9rem;
@@ -88,21 +95,24 @@ onMounted(fetchMessages);
   display: flex;
   align-items: center;
 }
+
 .content {
   color: #4a5568;
   line-height: 1.6;
 }
+
 .empty-state {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 400px; /* 固定高度，确保在没有消息时也有足够空间 */
+  height: 400px;
   color: #a0aec0;
   font-size: 1.2rem;
   font-style: italic;
   text-align: center;
-  width: 100%; /* 确保占满宽度 */
+  width: 100%;
 }
+
 @keyframes fadeInUp {
   from {
     opacity: 0;

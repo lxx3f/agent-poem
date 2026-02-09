@@ -43,6 +43,27 @@ class AgentService:
         mysql_service = MySQLService()
         return mysql_service.get_agents(limit)
 
+    def update_agent_system_prompt(
+        self,
+        agent_id: int,
+        system_prompt: str,
+    ) -> int:
+        '''
+        更新 Agent 的 system_prompt
+        
+        :param agent_id: agent ID
+        :type agent_id: int
+        :param system_prompt: 新的系统提示词
+        :type system_prompt: str
+        :return: 受影响的行数
+        :rtype: int
+        '''
+        mysql_service = MySQLService()
+        return mysql_service.update_agent_system_prompt(
+            agent_id=agent_id,
+            system_prompt=system_prompt
+        )
+    
     def run_agent(
         self,
         agent_id: int,

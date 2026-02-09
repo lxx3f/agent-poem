@@ -3,9 +3,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: light;
+  color: #213547;
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -15,11 +15,12 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: #4299e1;
   text-decoration: inherit;
 }
+
 a:hover {
-  color: #535bf2;
+  color: #3182ce;
 }
 
 body {
@@ -28,6 +29,7 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background-color: #f9fafb;
 }
 
 h1 {
@@ -42,13 +44,16 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #f8fafc;
   cursor: pointer;
   transition: border-color 0.25s;
+  color: #2d3748;
 }
+
 button:hover {
-  border-color: #646cff;
+  border-color: #4299e1;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
@@ -59,21 +64,40 @@ button:focus-visible {
 }
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  width: 100vw;
+  height: 100vh;
 }
 
-@media (prefers-color-scheme: light) {
+/* 深色主题适配 */
+@media (prefers-color-scheme: dark) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    color-scheme: dark;
+    color: #e2e8f0;
+    background-color: #1a202c;
   }
-  a:hover {
-    color: #747bff;
+  
+  body {
+    background-color: #1a202c;
   }
+  
   button {
-    background-color: #f9f9f9;
+    background-color: #2d3748;
+    color: #e2e8f0;
+  }
+  
+  button:hover {
+    border-color: #63b3ed;
+  }
+  
+  a {
+    color: #63b3ed;
+  }
+  
+  a:hover {
+    color: #90cdf4;
   }
 }

@@ -1,28 +1,83 @@
 <template>
   <div class="chat-view">
     <div v-if="error" class="error">
-      {{ error }}
+      <p>{{ error }}</p>
       <button @click="retryGetUserInfo">重试</button>
     </div>
-    <div v-else-if="!user" class="loading">正在加载用户信息...</div>
+    <div v-else-if="!user" class="loading">
+      加载中...
+    </div>
     <div v-else class="chat-layout">
       <div class="chat-sidebar">
-        <div class="sidebar-header">智能助手</div>
-        <AgentSelector />
-        <div class="conversation-section">
-          <div class="conversation-header">
-            <h3>对话历史</h3>
-            <button @click="showCreateDialog = true" class="new-conversation-btn" title="新建对话">
-              +
-            </button>
+        <div class="sidebar-header">诗云AI助手</div>
+        
+        <!-- 上半部分：Agent选择和Prompt编辑 -->
+        <div class="sidebar-top">
+          <AgentSelector />
+          
+          <!-- Agent Prompt 编辑区域 -->
+          <div v-if="agentStore.selected" class="prompt-editor-section">
+            <div class="prompt-header" @click="togglePromptEditor">
+              <h3>游戏规则设置</h3>
+              <span class="toggle-icon" :class="{ 'expanded': showPromptEditor }">
+                ▼
+              </span>
+            </div>
+            <div v-show="showPromptEditor" class="prompt-content">
+              <textarea 
+                v-model="agentPrompt"
+                class="prompt-textarea"
+                placeholder="请输入agent的游戏规则提示词..."
+                rows="6"
+              ></textarea>
+              <div class="prompt-actions">
+                <button 
+                  @click="resetPrompt" 
+                  class="btn-reset"
+                  :disabled="isSaving"
+                >
+                  重置
+                </button>
+                <button 
+                  @click="savePrompt" 
+                  class="btn-save"
+                  :disabled="isSaving || !hasPromptChanged"
+                >
+                  {{ isSaving ? '保存中...' : '保存' }}
+                </button>
+              </div>
+              <div v-if="saveMessage" class="save-message" :class="saveMessageType">
+                {{ saveMessage }}
+              </div>
+            </div>
           </div>
-          <ConversationList />
+        </div>
+        
+        <!-- 下半部分：会话列表 -->
+        <div class="sidebar-bottom">
+          <div class="conversation-section">
+            <div class="conversation-header">
+              <h3>对话记录</h3>
+              <button 
+                v-if="agentStore.selected"
+                @click="showCreateDialog = true"
+                class="new-conversation-btn"
+                title="新建对话"
+              >+</button>
+            </div>
+            <div class="conversation-list-container">
+              <ConversationList />
+            </div>
+          </div>
         </div>
       </div>
+      
       <div class="chat-main">
         <div class="chat-header">
+          <div class="user-info">
+            欢迎, {{ user.nickname }}
+          </div>
           <div class="user-actions">
-            <span class="user-info">欢迎，{{ user.nickname || '用户' }}!</span>
             <router-link to="/profile" class="profile-link">个人资料</router-link>
           </div>
         </div>
@@ -32,7 +87,9 @@
             请选择一个对话开始聊天
           </div>
         </div>
-        <MessageInput v-if="conversationStore.currentId" @message-sent="refreshMessages" />
+        <div class="message-input-container">
+          <MessageInput v-if="conversationStore.currentId" @message-sent="refreshMessages" />
+        </div>
       </div>
     </div>
     
@@ -61,12 +118,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, watch } from 'vue';
+import { ref, onMounted, nextTick, watch, computed } from 'vue';
 import { getMe } from '../api/auth';
 import { useRouter } from 'vue-router';
 import { useConversationStore } from '../stores/conversation';
 import { useAgentStore } from '../stores/agent';
 import { createConversation } from '../api/conversation';
+import { updateAgentSystemPrompt } from '../api/agent';
 import AgentSelector from '../components/AgentSelector.vue';
 import ConversationList from '../components/ConversationList.vue';
 import MessageList from '../components/MessageList.vue';
@@ -80,8 +138,15 @@ const agentStore = useAgentStore();
 const showCreateDialog = ref(false);
 const newConversationTitle = ref('');
 const messageListRef = ref(null);
-
 const titleInputRef = ref<HTMLInputElement|null>(null);
+
+// Prompt编辑相关
+const showPromptEditor = ref(false);
+const agentPrompt = ref('');
+const originalPrompt = ref('');
+const isSaving = ref(false);
+const saveMessage = ref('');
+const saveMessageType = ref<'success' | 'error'>('success');
 
 const getUserInfo = async () => {
   try {
@@ -174,6 +239,65 @@ const refreshMessages = () => {
   }
 };
 
+// Prompt编辑相关方法
+const togglePromptEditor = () => {
+  showPromptEditor.value = !showPromptEditor.value;
+  if (showPromptEditor.value && agentStore.selected) {
+    loadAgentPrompt();
+  }
+};
+
+const loadAgentPrompt = () => {
+  if (agentStore.selected) {
+    agentPrompt.value = agentStore.selected.system_prompt || '';
+    originalPrompt.value = agentPrompt.value;
+  }
+};
+
+const hasPromptChanged = computed(() => {
+  return agentPrompt.value !== originalPrompt.value;
+});
+
+const resetPrompt = () => {
+  agentPrompt.value = originalPrompt.value;
+  saveMessage.value = '';
+};
+
+const savePrompt = async () => {
+  if (!agentStore.selected || !hasPromptChanged.value) return;
+  
+  isSaving.value = true;
+  saveMessage.value = '';
+  
+  try {
+    const response = await updateAgentSystemPrompt(agentStore.selected.id, {
+      system_prompt: agentPrompt.value
+    });
+    
+    if (response.data && response.data.code === 200) {
+      // 更新store中的agent信息
+      agentStore.selected.system_prompt = agentPrompt.value;
+      originalPrompt.value = agentPrompt.value;
+      
+      saveMessageType.value = 'success';
+      saveMessage.value = '保存成功！';
+      
+      // 3秒后清除消息
+      setTimeout(() => {
+        saveMessage.value = '';
+      }, 3000);
+    } else {
+      throw new Error(response.data?.message || '保存失败');
+    }
+  } catch (err: any) {
+    console.error('保存prompt失败:', err);
+    saveMessageType.value = 'error';
+    saveMessage.value = err?.response?.data?.message || err?.message || '保存失败，请重试';
+  } finally {
+    isSaving.value = false;
+  }
+};
+
 onMounted(async () => {
   await getUserInfo();
   
@@ -194,6 +318,13 @@ watch(showCreateDialog, async (newValue) => {
     }
   }
 });
+
+// 监听agent选择变化
+watch(() => agentStore.selected, (newAgent) => {
+  if (newAgent && showPromptEditor.value) {
+    loadAgentPrompt();
+  }
+});
 </script>
 
 <style scoped>
@@ -202,7 +333,9 @@ watch(showCreateDialog, async (newValue) => {
   flex-direction: column; 
   height: 100vh; 
   background-color: #f9fafb;
+  overflow: hidden; /* 防止整体页面溢出 */
 }
+
 .error { 
   padding: 2rem; 
   text-align: center; 
@@ -212,43 +345,67 @@ watch(showCreateDialog, async (newValue) => {
   border-radius: 8px;
   margin: 1rem;
 }
+
 .loading { 
   padding: 2rem; 
   text-align: center; 
   color: #4a5568;
 }
+
 .chat-layout {
   display: flex;
-  height: calc(100vh - 20px);
+  height: 100%; /* 改为100%，继承父容器高度 */
   flex: 1;
   margin: 10px;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
+
+/* 左侧侧边栏核心布局修改 */
 .chat-sidebar {
   width: 280px;
   background: linear-gradient(to bottom, #ffffff, #f8fafc);
   border-right: 1px solid #e2e8f0;
   padding: 1.5rem 1rem;
+  /* 关键：设置垂直flex布局 */
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  box-sizing: border-box;
-  transition: all 0.3s ease;
+  gap: 1rem; /* 各部分之间的间距 */
+  height: 100%;
+  overflow: hidden; /* 防止侧边栏整体溢出 */
 }
+
 .sidebar-header {
   font-weight: 700;
-  margin-bottom: 1rem;
   font-size: 1.3rem;
   color: #2d3748;
   text-align: center;
   padding-bottom: 0.5rem;
   border-bottom: 2px solid #ebf8ff;
+  flex-shrink: 0; /* 固定头部，不压缩 */
 }
+
+/* 侧边栏上半部分：Agent选择+Prompt编辑 */
+.sidebar-top {
+  flex-shrink: 0; /* 自适应高度，不压缩 */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* 侧边栏下半部分：会话列表 - 占剩余空间 */
+.sidebar-bottom {
+  flex: 1; /* 占据剩余所有空间 */
+  overflow: hidden; /* 内部滚动，不影响外部 */
+}
+
 .conversation-section {
-  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
+
 .conversation-header {
   display: flex;
   justify-content: space-between;
@@ -256,13 +413,35 @@ watch(showCreateDialog, async (newValue) => {
   margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid #edf2f7;
+  flex-shrink: 0; /* 固定头部，不压缩 */
 }
+
 .conversation-header h3 {
   margin: 0;
   font-size: 1.1rem;
   color: #4a5568;
   font-weight: 600;
 }
+
+/* 会话列表容器 - 可滚动 */
+.conversation-list-container {
+  flex: 1;
+  overflow-y: auto; /* 内容超出时垂直滚动 */
+  padding-right: 4px; /* 滚动条间距 */
+}
+
+/* 隐藏滚动条（可选，美化用） */
+.conversation-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+.conversation-list-container::-webkit-scrollbar-thumb {
+  background-color: #cbd5e0;
+  border-radius: 3px;
+}
+.conversation-list-container::-webkit-scrollbar-track {
+  background-color: #f1f5f9;
+}
+
 .new-conversation-btn {
   background: linear-gradient(135deg, #4299e1, #3182ce);
   color: white;
@@ -278,26 +457,154 @@ watch(showCreateDialog, async (newValue) => {
   box-shadow: 0 2px 4px rgba(66, 153, 225, 0.4);
   transition: all 0.2s ease;
 }
+
 .new-conversation-btn:hover {
   transform: scale(1.1);
   box-shadow: 0 4px 8px rgba(66, 153, 225, 0.5);
   background: linear-gradient(135deg, #63b3ed, #4299e1);
 }
-.no-conversation-selected {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #a0aec0;
-  font-size: 1.1rem;
-  font-weight: 500;
+
+/* Prompt编辑区样式 */
+.prompt-editor-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
 }
+
+.prompt-header {
+  padding: 0.75rem 1rem;
+  background: linear-gradient(to right, #4299e1, #3182ce);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+
+.prompt-header:hover {
+  background: linear-gradient(to right, #63b3ed, #4299e1);
+}
+
+.prompt-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.toggle-icon {
+  transition: transform 0.3s ease;
+  font-size: 0.8rem;
+}
+
+.toggle-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.prompt-content {
+  padding: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.prompt-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: 'Courier New', monospace;
+  resize: vertical;
+  min-height: 120px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.prompt-textarea:focus {
+  outline: none;
+  border-color: #63b3ed;
+  box-shadow: 0 0 0 2px rgba(99, 179, 237, 0.2);
+}
+
+.prompt-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  justify-content: flex-end;
+}
+
+.btn-reset, .btn-save {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-reset {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.btn-reset:hover:not(:disabled) {
+  background: #cbd5e0;
+}
+
+.btn-reset:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #48bb78, #38a169);
+  color: white;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: linear-gradient(135deg, #68d391, #48bb78);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(72, 187, 120, 0.3);
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.save-message {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.save-message.success {
+  background: #f0fff4;
+  color: #38a169;
+  border: 1px solid #9ae6b4;
+}
+
+.save-message.error {
+  background: #fff5f5;
+  color: #e53e3e;
+  border: 1px solid #feb2b2;
+}
+
+/* 右侧聊天区域 */
 .chat-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   background-color: #fff;
+  overflow: hidden; /* 防止内部溢出 */
 }
+
 .chat-header {
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #e2e8f0;
@@ -305,17 +612,21 @@ watch(showCreateDialog, async (newValue) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0; /* 固定头部 */
 }
+
 .user-actions {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
+
 .user-info {
   font-weight: 600;
   color: #2b6cb0;
   font-size: 1.1rem;
 }
+
 .profile-link {
   color: #4299e1;
   text-decoration: none;
@@ -325,16 +636,35 @@ watch(showCreateDialog, async (newValue) => {
   transition: all 0.2s ease;
   font-weight: 500;
 }
+
 .profile-link:hover {
   background-color: #bee3f8;
   transform: translateY(-1px);
 }
+
 .chat-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto; /* 聊天记录可滚动 */
   background: #f9fafb;
+  padding: 1rem; /* 内边距，优化显示 */
+}
+
+.no-conversation-selected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #a0aec0;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+/* 输入框容器 - 固定在底部 */
+.message-input-container {
+  padding: 1rem;
+  border-top: 1px solid #e2e8f0;
+  background-color: #fff;
+  flex-shrink: 0; /* 固定高度，不压缩 */
 }
 
 /* 模态框样式 */

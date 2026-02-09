@@ -117,8 +117,12 @@ const formatDate = (dateString?: string) => {
   flex-direction: column;
   gap: 0.5rem;
   overflow-y: auto;
-  max-height: calc(100vh - 220px); /* 考虑到其他元素的高度 */
+  /* 移除固定的max-height，让flex布局自动处理 */
+  min-height: 0; /* 允许flex子元素收缩 */
+  padding-right: 8px; /* 为滚动条预留空间 */
+  scrollbar-gutter: stable; /* 保持滚动条空间 */
 }
+
 .conversation-item {
   padding: 0.875rem;
   cursor: pointer;
@@ -128,6 +132,7 @@ const formatDate = (dateString?: string) => {
   display: flex;
   align-items: center;
   background: white;
+  flex-shrink: 0; /* 防止项目被压缩 */
 }
 .conversation-item.active {
   background: linear-gradient(to right, #e6f7ff, #dbeafe);
