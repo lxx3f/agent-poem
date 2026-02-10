@@ -48,6 +48,11 @@ class PoetryGameAgent(BaseAgentLoop):
             conversation_id=self.conversation_id,
             user_id=self.user_id,
             limit=kwargs.get('history_limit', 10))
+        recent_messages_str = [
+            f"{message.get('role', 'user')}: {message.get('content', '')}"
+            for message in recent_messages
+        ]
+        recent_messages_str = "\n".join(recent_messages_str)
 
         # 获取用户长期记忆数据
         user_memory = self.mysql_service.get_agent_user_memory(
@@ -58,27 +63,27 @@ class PoetryGameAgent(BaseAgentLoop):
             agent_id=conversation.get('agent_id', 1)).get('system_prompt', '')
 
         return {
-            'recent_messages': recent_messages,
+            'recent_messages': recent_messages_str,
             'user_input': user_input,
             'conversation_memory': conversation.get('memory_data', {}),
             'user_memory': user_memory,
             'game_rules': system_prompt,
-            'tools_call_history': [],
+            'tools_calls_history': [],
         }
 
     def think(self, perception: Dict[str, Any], **kwargs) -> str:
         """
         思考阶段：分析用户输入和工具调用结果，决定AI的回应策略
         """
-        filtered_perception = {
-            'game_rules': perception.get('game_rules', ''),
-            'recent_messages': perception.get('recent_messages', []),
-            'user_input': perception.get('user_input', ''),
-            'tools_calls_history': perception.get('tools_call_history', []),
-            'user_memory': perception.get('user_memory', {}),
-            'conversation_memory': perception.get('conversation_memory', {})
-        }
-        prompt = get_prompt_by_template('poetry_game', **filtered_perception)
+        # filtered_perception = {
+        #     'game_rules': perception.get('game_rules', ''),
+        #     'recent_messages': perception.get('recent_messages', []),
+        #     'user_input': perception.get('user_input', ''),
+        #     'tools_calls_history': perception.get('tools_calls_history', []),
+        #     'user_memory': perception.get('user_memory', {}),
+        #     'conversation_memory': perception.get('conversation_memory', {})
+        # }
+        prompt = get_prompt_by_template('poetry_game', **perception)
         res = self.llm.chat(
             messages=[LLMMessage(role="system", content=prompt)])
         return res
@@ -171,27 +176,32 @@ class PoetryGameAgent(BaseAgentLoop):
         while loop_count < self.max_iterations:
             loop_count += 1
             # 思考阶段
-            action_plan_str = self.think(perception, **kwargs)
+            action_plans_str = self.think(perception, **kwargs)
             # 解析行动计划
             try:
-                action_plan = eval(action_plan_str)
+                action_plans = eval(action_plans_str)
             except Exception as e:
                 action_plan = {
                     'action_type': 'send_message',
                     'message': '抱歉，我暂时无法处理您的请求。'
                 }
             # 执行阶段
-            action_result = self.act(action_plan, **kwargs)
-            # 更新感知信息
-            perception['tools_call_history'].append({
-                'action_plan':
-                action_plan,
-                'action_result':
-                action_result,
-            })
-            # 如果是发送消息，结束循环
-            if action_plan['action_type'] == 'send_message':
+            is_break = False
+            for action_plan in action_plans:
+                action_result = self.act(action_plan, **kwargs)
+                # 更新感知信息
+                perception['tools_calls_history'].append({
+                    'action_plan':
+                    action_plan,
+                    'action_result':
+                    action_result,
+                })
+                # 如果是发送消息，结束循环
+                if action_plan.get('action_type') == 'send_message':
+                    is_break = True
+            if is_break:
                 break
+
         self.message_service.update_message_status(
             message_id=user_message_id,
             status='done',

@@ -333,6 +333,29 @@ class MySQLService:
                 raise BusinessException(404, "mysql error: agent not found")
             return row
 
+    def update_agent_system_prompt(self, agent_id: int, system_prompt: str) -> int:
+        '''
+        更新 agent 的 system_prompt
+        
+        :param agent_id: Agent ID
+        :type agent_id: int
+        :param system_prompt: 新的系统提示词
+        :type system_prompt: str
+        :return: 受影响的行数
+        :rtype: int
+        '''
+        sql = """
+        UPDATE agents
+        SET system_prompt = %s, updated_at = %s
+        WHERE id = %s
+        """
+        now = datetime.now(timezone.utc)
+        with self.conn.cursor() as cursor:
+            cursor.execute(sql, (system_prompt, now, agent_id))
+            if cursor.rowcount == 0:
+                raise BusinessException(404, "mysql error: agent not found")
+            return cursor.rowcount
+
     # =====================
     # Conversation
     # =====================

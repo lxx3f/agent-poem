@@ -75,6 +75,7 @@ const formatDate = (dateString?: string) => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  min-height: 180px; /* 固定最小高度，避免界面跳动 */
 }
 
 .agent-selection {
@@ -95,14 +96,19 @@ select {
   border-radius: 4px;
   background-color: #fafafa;
   margin-top: 0.5rem;
-  max-height: 120px; /* 限制最大高度 */
+  flex: 1; /* 占据剩余空间 */
+  min-height: 120px; /* 最小高度 */
+  max-height: 120px; /* 固定最大高度 */
   overflow-y: auto; /* 超出时显示滚动条 */
+  display: flex;
+  flex-direction: column;
 }
 
 .agent-details h4 {
   margin: 0 0 0.5rem 0;
   font-size: 1rem;
   color: #303133;
+  flex-shrink: 0; /* 不压缩标题 */
 }
 
 .agent-description {
@@ -110,6 +116,8 @@ select {
   font-size: 0.875rem;
   color: #606266;
   line-height: 1.4;
+  flex: 1; /* 描述占据可用空间 */
+  overflow-y: auto; /* 描述过长时滚动 */
 }
 
 .agent-meta {
@@ -118,11 +126,37 @@ select {
   gap: 0.75rem;
   font-size: 0.75rem;
   color: #909399;
+  flex-shrink: 0; /* 不压缩元信息 */
 }
 
 .agent-type, .agent-created {
   background-color: #ecf5ff;
   padding: 0.125rem 0.375rem;
   border-radius: 8px;
+}
+
+/* 深色主题适配 */
+@media (prefers-color-scheme: dark) {
+  .agent-details {
+    border: 1px solid #4a5568;
+    background-color: #2d3748;
+  }
+  
+  .agent-details h4 {
+    color: #e2e8f0;
+  }
+  
+  .agent-description {
+    color: #cbd5e0;
+  }
+  
+  .agent-meta {
+    color: #a0aec0;
+  }
+  
+  .agent-type, .agent-created {
+    background-color: #4299e1;
+    color: #fff;
+  }
 }
 </style>

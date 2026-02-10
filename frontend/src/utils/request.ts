@@ -2,7 +2,7 @@ import axios from "axios";
 
 const request = axios.create({
     baseURL: import.meta.env.VITE_API_BASE || "http://localhost:8000/api",
-    timeout: 20000,
+    timeout: 60000, // 从20秒增加到60秒，适应LLM处理时间
 });
 
 request.interceptors.request.use((config) => {

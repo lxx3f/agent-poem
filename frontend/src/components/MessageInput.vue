@@ -13,23 +13,37 @@
       />
       <button 
         type="submit" 
-        :disabled="isSendDisabled || isLoading"
+        :disabled="isSendDisabled"
         class="send-button"
+        :class="{ 'sending': isLoading }"
       >
         <span v-if="!isLoading">发送</span>
-        <span v-else>发送中...</span>
+        <span v-else class="sending-content">
+          <span class="spinner"></span>
+          {{ sendingText }}
+        </span>
       </button>
     </form>
     
     <!-- 错误提示 -->
     <div v-if="error" class="error-message">
-      {{ error }}
+      <div class="error-content">
+        <span>{{ error }}</span>
+        <button v-if="canRetry" @click="retrySend" class="retry-button">
+          重试
+        </button>
+      </div>
+    </div>
+    
+    <!-- 加载提示 -->
+    <div v-if="isLoading && showLoadingHint" class="loading-hint">
+      AI正在思考中，请稍候...
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onUnmounted } from 'vue';
 import { useConversationStore } from '../stores/conversation';
 import { useAgentStore } from '../stores/agent';
 import { runAgent } from '../api/agent';
@@ -39,13 +53,17 @@ const content = ref('');
 const isLoading = ref(false);
 const error = ref('');
 const inputRef = ref<HTMLTextAreaElement | null>(null);
+const sendingText = ref('发送中...');
+const showLoadingHint = ref(false);
+const canRetry = ref(false);
+const failedMessage = ref('');
 
 // 使用 stores
 const conversationStore = useConversationStore();
 const agentStore = useAgentStore();
 
 // 定义 emits
-const emit = defineEmits(['message-sent']);
+const emit = defineEmits(['message-sent', 'optimistic-message']);
 
 // 计算属性
 const isSendDisabled = computed(() => {
@@ -54,6 +72,10 @@ const isSendDisabled = computed(() => {
          !agentStore.selected || 
          isLoading.value;
 });
+
+// 加载提示定时器
+let loadingHintTimer: number | null = null;
+let sendingTextTimer: number | null = null;
 
 // 处理回车键
 const handleEnterKey = (e: KeyboardEvent) => {
@@ -76,62 +98,108 @@ const adjustTextareaHeight = () => {
   }
 };
 
+// 显示加载提示
+const showLoadingIndicators = () => {
+  // 1秒后显示加载提示
+  loadingHintTimer = window.setTimeout(() => {
+    showLoadingHint.value = true;
+  }, 1000);
+  
+  // 动态更新发送文本
+  const texts = ['发送中...', 'AI思考中...', '正在检索...', '整理回复中...'];
+  let index = 0;
+  
+  sendingTextTimer = window.setInterval(() => {
+    index = (index + 1) % texts.length;
+    sendingText.value = texts[index] || '发送中...'; // 添加默认值
+  }, 2000);
+};
+
+// 隐藏加载提示
+const hideLoadingIndicators = () => {
+  showLoadingHint.value = false;
+  sendingText.value = '发送中...';
+  
+  if (loadingHintTimer) {
+    clearTimeout(loadingHintTimer);
+    loadingHintTimer = null;
+  }
+  
+  if (sendingTextTimer) {
+    clearInterval(sendingTextTimer);
+    sendingTextTimer = null;
+  }
+};
+
 // 发送消息
 const onSend = async () => {
   if (isSendDisabled.value) return;
 
+  const messageContent = content.value.trim();
+  if (!messageContent) return;
+
   error.value = '';
+  canRetry.value = false;
+  failedMessage.value = messageContent;
+  
   isLoading.value = true;
+  showLoadingIndicators();
 
   try {
+    // 乐观更新：立即触发消息发送事件，让用户感觉更快
+    emit('optimistic-message', {
+      content: messageContent,
+      role: 'user',
+      timestamp: new Date().toISOString()
+    });
+    
+    // 调用后端API
     await runAgent(agentStore.selected!.id, {
-      user_input: content.value,
+      user_input: messageContent,
       conversation_id: parseInt(conversationStore.currentId)
     });
     
-    // 清空输入框
+    // 成功后清空输入框
     content.value = '';
-    adjustTextareaHeight(); // 重置文本框高度
+    adjustTextareaHeight();
     
     // 触发消息发送事件，通知父组件刷新消息列表
     emit('message-sent');
+    
   } catch (err: any) {
     console.error('发送失败:', err);
     let errorMessage = '发送失败，请稍后再试';
     
-    if (err?.response?.data?.message) {
+    // 根据错误类型提供更具体的提示
+    if (err?.code === 'ECONNABORTED') {
+      errorMessage = '请求超时，请检查网络连接或稍后重试';
+    } else if (err?.response?.status === 401) {
+      errorMessage = '认证已过期，请重新登录';
+    } else if (err?.response?.data?.message) {
       errorMessage = err.response.data.message;
     } else if (err?.message) {
       errorMessage = err.message;
     }
     
     error.value = errorMessage;
+    canRetry.value = true;
   } finally {
     isLoading.value = false;
+    hideLoadingIndicators();
   }
 };
 
-// 组件挂载后聚焦到输入框
-onMounted(() => {
-  adjustTextareaHeight();
-  if (inputRef.value) {
-    inputRef.value.focus();
+// 重试发送
+const retrySend = () => {
+  if (failedMessage.value) {
+    content.value = failedMessage.value;
+    onSend();
   }
-});
-
-// 监听窗口大小变化，调整文本框高度
-const handleResize = () => {
-  nextTick(() => {
-    adjustTextareaHeight();
-  });
 };
 
-onMounted(() => {
-  window.addEventListener('resize', handleResize);
-});
-
+// 组件卸载时清理定时器
 onUnmounted(() => {
-  window.removeEventListener('resize', handleResize);
+  hideLoadingIndicators();
 });
 </script>
 
@@ -141,6 +209,9 @@ onUnmounted(() => {
   border-top: 1px solid #e2e8f0;
   background: linear-gradient(to bottom, #ffffff, #f8fafc);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  height: 160px;
+  display: flex;
+  flex-direction: column;
 }
 
 .input-form {
@@ -148,86 +219,134 @@ onUnmounted(() => {
   gap: 0.75rem;
   align-items: flex-end;
   border-radius: 10px;
-  padding: 0.75rem;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.input-form:focus-within {
-  border-color: #63b3ed;
-  box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.2);
 }
 
 .message-textarea {
   flex: 1;
-  padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  resize: none;
-  font-family: inherit;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   font-size: 1rem;
-  line-height: 1.5;
-  min-height: 44px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  resize: none;
+  min-height: 56px;
   max-height: 150px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  background-color: #f8fafc;
+  transition: all 0.2s ease;
+  background-color: #fff;
 }
 
 .message-textarea:focus {
   outline: none;
-  border-color: #63b3ed;
-  box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.1);
-  background-color: white;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
 }
 
 .message-textarea:disabled {
-  background-color: #edf2f7;
+  background-color: #f7fafc;
   cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .send-button {
   padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #4299e1, #3182ce);
+  color: white;
+  border: none;
+  border-radius: 12px;
   font-size: 1rem;
   font-weight: 500;
-  color: #fff;
-  background: linear-gradient(135deg, #4299e1, #3182ce);
-  border: none;
-  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(66, 153, 225, 0.3);
+  min-width: 80px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .send-button:hover:not(:disabled) {
   background: linear-gradient(135deg, #63b3ed, #4299e1);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(66, 153, 225, 0.4);
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
 }
 
 .send-button:disabled {
-  background: #a0aec0;
+  opacity: 0.6;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
-.error-message {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
-  color: #e53e3e;
-  font-size: 0.9rem;
-  background-color: #fff5f5;
-  border-radius: 8px;
-  border-left: 4px solid #fc8181;
-  animation: shake 0.3s ease-in-out;
+.send-button.sending {
+  background: linear-gradient(135deg, #a0aec0, #718096);
+  cursor: wait;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+.sending-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e2e8f0;
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 8px;
+  color: #c53030;
+  font-size: 0.9rem;
+}
+
+.error-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.retry-button {
+  background: #fff;
+  color: #c53030;
+  border: 1px solid #fed7d7;
+  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-button:hover {
+  background: #fff5f5;
+}
+
+.loading-hint {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #ebf8ff;
+  border: 1px solid #bee3f8;
+  border-radius: 6px;
+  color: #2b6cb0;
+  font-size: 0.9rem;
+  text-align: center;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>

@@ -29,9 +29,17 @@ class AgentListResponse(BaseModel):
 class AgentRunRequest(BaseModel):
     user_input: str
     conversation_id: int
-    workflow: Literal["poetry_game", "rag_chat"] = "rag_chat"
     history_limit: int = 10
 
 
 class AgentRunResponse(BaseModel):
     message: str
+
+
+class AgentUpdateSystemPromptRequest(BaseModel):
+    system_prompt: str = Field(..., min_length=1, max_length=10000, description="新的系统提示词")
+
+
+class AgentUpdateSystemPromptResponse(BaseModel):
+    message: str
+    agent_id: int

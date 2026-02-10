@@ -15,8 +15,12 @@ export function getAgent(agentId: number) {
 }
 
 // 运行智能体
-export function runAgent(agentId: number, data: { user_input: string; conversation_id: number; workflow?: string; history_limit?: number }) {
+export function runAgent(agentId: number, data: { user_input: string; conversation_id: number; history_limit?: number }) {
     return request.post(prefix + `/${agentId}/run`, data);
 }
-// }
+
+// 更新智能体的system_prompt
+export function updateAgentSystemPrompt(agentId: number, data: { system_prompt: string }) {
+    return request.post(prefix + `/${agentId}/update_system_prompt`, data);
+}
 
