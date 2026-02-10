@@ -82,13 +82,21 @@
           </div>
         </div>
         <div class="chat-content">
-          <MessageList ref="messageListRef" v-if="conversationStore.currentId" />
+          <MessageList 
+            ref="messageListRef" 
+            v-if="conversationStore.currentId" 
+            :optimistic-messages="optimisticMessages"
+          />
           <div v-else class="no-conversation-selected">
             请选择一个对话开始聊天
           </div>
         </div>
         <div class="message-input-container">
-          <MessageInput v-if="conversationStore.currentId" @message-sent="refreshMessages" />
+          <MessageInput 
+            v-if="conversationStore.currentId" 
+            @message-sent="refreshMessages"
+            @optimistic-message="handleOptimisticMessage"
+          />
         </div>
       </div>
     </div>
@@ -147,6 +155,15 @@ const originalPrompt = ref('');
 const isSaving = ref(false);
 const saveMessage = ref('');
 const saveMessageType = ref<'success' | 'error'>('success');
+
+// 乐观更新相关
+const optimisticMessages = ref<Array<{
+  id: string;
+  content: string;
+  role: 'user' | 'assistant';
+  timestamp: string;
+  status: 'sending' | 'sent';
+}>>([]);
 
 const getUserInfo = async () => {
   try {
@@ -233,10 +250,33 @@ const confirmCreateNewConversation = async () => {
 
 // 刷新消息列表
 const refreshMessages = () => {
+  // 清除乐观消息
+  optimisticMessages.value = [];
+  
   if (messageListRef.value) {
     // 调用MessageList组件的refresh方法
     (messageListRef.value as any).refresh();
   }
+};
+
+// 处理乐观消息
+const handleOptimisticMessage = (message: { content: string; role: 'user'; timestamp: string }) => {
+  const optimisticMessage = {
+    id: `optimistic-${Date.now()}`,
+    content: message.content,
+    role: message.role,
+    timestamp: message.timestamp,
+    status: 'sending' as const
+  };
+  
+  optimisticMessages.value.push(optimisticMessage);
+  
+  // 滚动到底部
+  nextTick(() => {
+    if (messageListRef.value) {
+      (messageListRef.value as any).scrollToBottom();
+    }
+  });
 };
 
 // Prompt编辑相关方法
@@ -325,6 +365,12 @@ watch(() => agentStore.selected, (newAgent) => {
     loadAgentPrompt();
   }
 });
+
+// 监听会话切换，清空乐观消息
+watch(() => conversationStore.currentId, () => {
+  optimisticMessages.value = [];
+});
+
 </script>
 
 <style scoped>
